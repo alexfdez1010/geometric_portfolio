@@ -5,21 +5,22 @@ from typing import cast
 
 def arithmetic_mean(returns: pd.Series, periods_per_year: int = 252) -> float:
     """
-    Calculate the arithmetic mean of daily returns.
+    Calculate the annualized arithmetic mean from daily returns.
 
     Args:
         returns: Series of daily returns.
         periods_per_year: Trading periods per year (default is 252).
 
     Returns:
-        float: Arithmetic mean of the returns.
+        float: Annualized arithmetic mean of the returns.
     """
-    return cast(float, returns.mean() * periods_per_year)
+    mean = returns.mean()
+    return (1 + mean) ** periods_per_year - 1
 
 
 def geometric_mean(returns: pd.Series, periods_per_year: int = 252) -> float:
     """
-    Calculate the geometric mean (compound average) of daily returns.
+    Calculate the annualized geometric mean (compound average) of daily returns.
 
     Args:
         returns: Series of daily returns.
@@ -33,7 +34,7 @@ def geometric_mean(returns: pd.Series, periods_per_year: int = 252) -> float:
 
 def volatility(returns: pd.Series, periods_per_year: int = 252) -> float:
     """
-    Calculate the annualized volatility of returns.
+    Calculate the annualized volatility from daily returns.
 
     Args:
         returns: Series of daily returns.
