@@ -1,6 +1,6 @@
 import pandas as pd
 from geometric_portfolio.data import get_returns
-from geometric_portfolio.montecarlo import MonteCarlo
+from geometric_portfolio.solver import PortfolioSolver
 from geometric_portfolio.metrics import summary
 
 def test_integration_full_flow():
@@ -13,13 +13,17 @@ def test_integration_full_flow():
     assert not returns.empty
 
     # Run Monte Carlo simulation
-    mc = MonteCarlo(returns)
-    best_weights = mc.run(num_simulations=500)  # Use 500 for a quick test
-    assert isinstance(best_weights, dict)
-    print("Best weights found:", best_weights)
+    solver = PortfolioSolver(returns)
+    best_geometric, best_volatility, best_alejandro = solver.run()  
+    assert isinstance(best_geometric, dict)
+    assert isinstance(best_volatility, dict)
+    assert isinstance(best_alejandro, dict)
+    print("Best geometric weights found:", best_geometric)
+    print("Best volatility weights found:", best_volatility)
+    print("Best alejandro weights found:", best_alejandro)
 
-    # Compute returns for best weights
-    best_returns = mc.compute_returns({k: best_weights[k] for k in tickers})
+    # Compute returns for best geometric weights
+    best_returns = solver.compute_returns({k: best_geometric[k] for k in tickers})
 
     # Show metrics summary
     print("\nPortfolio summary for best weights:")

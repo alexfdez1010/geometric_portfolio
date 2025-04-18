@@ -57,7 +57,11 @@ def sharpe_ratio(returns: pd.Series, risk_free_rate: float = 0.0, periods_per_ye
     Returns:
         float: Annualized Sharpe ratio.
     """
-    return (arithmetic_mean(returns, periods_per_year) - risk_free_rate) / volatility(returns, periods_per_year)
+    vol = volatility(returns, periods_per_year)
+    if np.isclose(vol, 0):
+        return np.nan
+    return (arithmetic_mean(returns, periods_per_year) - risk_free_rate) / vol
+
 
 def alejandro_ratio(returns: pd.Series, periods_per_year: int = 252) -> float:
     """
@@ -70,7 +74,10 @@ def alejandro_ratio(returns: pd.Series, periods_per_year: int = 252) -> float:
     Returns:
         float: Annualized Alejandro ratio.
     """
-    return geometric_mean(returns, periods_per_year) / volatility(returns, periods_per_year)
+    vol = volatility(returns, periods_per_year)
+    if np.isclose(vol, 0):
+        return np.nan
+    return geometric_mean(returns, periods_per_year) / vol
 
 
 def max_drawdown(returns: pd.Series) -> float:
@@ -183,4 +190,3 @@ def wealth(returns: pd.Series, initial_wealth: float = 1.0) -> pd.Series:
         pd.Series: Series of computed wealth index.
     """
     return (1 + returns).cumprod() * initial_wealth
-    

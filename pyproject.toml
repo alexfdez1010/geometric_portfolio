@@ -16,6 +16,7 @@ dependencies = [
     "tool>=0.8.0",
     "watchdog>=6.0.0",
     "yfinance>=0.2.55",
+    "scipy>=1.10.0",
 ]
 
 [build-system]
