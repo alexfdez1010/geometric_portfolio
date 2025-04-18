@@ -2,7 +2,7 @@ from typing import cast
 import pandas as pd
 import yfinance as yf
 
-def get_returns(tickets: list[str], start_date: str, end_date: str) -> pd.DataFrame:
+def get_returns(tickets: list[str], start_date: str | None = None, end_date: str | None = None) -> pd.DataFrame:
     """
     Get daily returns for a list of tickets from Yahoo Finance.
 
@@ -25,4 +25,10 @@ def get_returns(tickets: list[str], start_date: str, end_date: str) -> pd.DataFr
     if df.empty or all([col not in df.columns for col in tickets]):
         raise ValueError("No data found for the given tickets.")
     
-    return df.pct_change().dropna()
+    # Find the first date where all assets have data
+    first_valid_date = df.dropna().index[0] if not df.dropna().empty else None
+    
+    if first_valid_date is not None:
+        df = df.loc[first_valid_date:]
+    
+    return df.pct_change(fill_method=None).dropna()

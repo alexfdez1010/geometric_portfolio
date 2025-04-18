@@ -156,7 +156,7 @@ def best_year(returns: pd.Series) -> float:
     Returns:
         float: Total return for the best year.
     """
-    yearly = returns.groupby("YE").apply(lambda x: (1 + x).prod() - 1)
+    yearly = returns.groupby(returns.index.year).apply(lambda x: (1 + x).prod() - 1)
     return float(yearly.max())
 
 
@@ -170,7 +170,7 @@ def worst_year(returns: pd.Series) -> float:
     Returns:
         float: Total return for the worst year.
     """
-    yearly = returns.groupby("YE").apply(lambda x: (1 + x).prod() - 1)
+    yearly = returns.groupby(returns.index.year).apply(lambda x: (1 + x).prod() - 1)
     return float(yearly.min())
 
 
