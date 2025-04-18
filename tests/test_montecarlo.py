@@ -3,7 +3,7 @@ import numpy as np
 from geometric_portfolio.montecarlo import MonteCarlo
 
 def test_possible_weights_sum_to_one():
-    returns = pd.DataFrame(np.random.randn(10, 3), columns=["A", "B", "C"])
+    returns = pd.DataFrame(np.random.randn(10, 3), columns=["A", "B", "C"])  # type: ignore
     mc = MonteCarlo(returns)
     weights = mc._possible_weights(["A", "B", "C"])
     assert np.isclose(sum(weights.values()), 1.0)
