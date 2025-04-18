@@ -57,10 +57,20 @@ def sharpe_ratio(returns: pd.Series, risk_free_rate: float = 0.0, periods_per_ye
     Returns:
         float: Annualized Sharpe ratio.
     """
-    excess = returns - risk_free_rate / periods_per_year
-    ann_excess = excess.mean() * periods_per_year
-    ann_vol = excess.std(ddof=1) * np.sqrt(periods_per_year)
-    return ann_excess / ann_vol if ann_vol != 0 else np.nan
+    return (arithmetic_mean(returns, periods_per_year) - risk_free_rate) / volatility(returns, periods_per_year)
+
+def alejandro_ratio(returns: pd.Series, periods_per_year: int = 252) -> float:
+    """
+    Calculate the annualized Alejandro ratio of returns (geometric mean / volatility)
+
+    Args:
+        returns: Series of daily returns.
+        periods_per_year: Trading periods per year (default is 252).
+
+    Returns:
+        float: Annualized Alejandro ratio.
+    """
+    return geometric_mean(returns, periods_per_year) / volatility(returns, periods_per_year)
 
 
 def max_drawdown(returns: pd.Series) -> float:
@@ -147,10 +157,11 @@ def summary(returns: pd.Series, risk_free_rate: float = 0.0, periods_per_year: i
         pd.Series: Series of computed metrics.
     """
     metrics = {
-        'Arithmetic Mean': arithmetic_mean(returns),
         'Geometric Mean': geometric_mean(returns),
         'Volatility': volatility(returns),
+        'Alejandro Ratio': alejandro_ratio(returns),
         'Sharpe Ratio': sharpe_ratio(returns, risk_free_rate, periods_per_year),
+        'Arithmetic Mean': arithmetic_mean(returns),
         'Max Drawdown': max_drawdown(returns),
         'Best Day': best_day(returns),
         'Worst Day': worst_day(returns),

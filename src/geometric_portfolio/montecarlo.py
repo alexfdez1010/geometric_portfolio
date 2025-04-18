@@ -3,23 +3,27 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-from geometric_portfolio.metrics import geometric_mean, arithmetic_mean
+from geometric_portfolio.metrics import geometric_mean, volatility, alejandro_ratio
 
 class MonteCarlo:
     """
     Monte Carlo simulation for finding best weights for a portfolio maximizing geometric mean return.
     """
     returns: pd.DataFrame
-    best_weights: dict[str, float] | None
+    best_weights_geometric: dict[str, float] | None
+    best_weights_volatility: dict[str, float] | None
+    best_weights_alejandro: dict[str, float] | None
     last_results: pd.DataFrame
 
     def __init__(self, returns: pd.DataFrame):
         self.returns = returns
-        self.best_weights = None
+        self.best_weights_geometric = None
+        self.best_weights_volatility = None
+        self.best_weights_alejandro = None
         self.last_results = pd.DataFrame()
         self.number_of_assets = len(returns.columns)
         
-    def run(self, num_simulations: int = 10000) -> dict[str, float]:
+    def run(self, num_simulations: int = 10000) -> tuple[dict[str, float], dict[str, float], dict[str, float]]:
         """
         Run Monte Carlo simulation to find best weights for a portfolio maximizing geometric mean return.
 
@@ -27,7 +31,7 @@ class MonteCarlo:
             num_simulations: Number of simulations to run.
 
         Returns:
-            dict[str, float]: Dictionary containing the best weights found for the portfolio.
+            tuple[dict[str, float], dict[str, float], dict[str, float]]: Tuple containing the best weights found for the portfolio (geometric mean, volatility and alejandro ratio)
         """
 
         assets = list(self.returns.columns)
@@ -43,16 +47,23 @@ class MonteCarlo:
 
             last_simulation = pd.DataFrame([{
                 **{asset: weights[asset] for asset in assets},
-                "arithmetic_mean": arithmetic_mean(returns),
-                "geometric_mean": geometric_mean(returns)
+                "geometric_mean": geometric_mean(returns),
+                "volatility": volatility(returns),
+                "alejandro_ratio": alejandro_ratio(returns)
             }])
             
             self.last_results = pd.concat([self.last_results, last_simulation], ignore_index=True)
         
-        best_index = self.last_results["geometric_mean"].idxmax()
-        self.best_weights = cast(dict[str, float], self.last_results.loc[best_index].to_dict())
+        best_index_geometric = self.last_results["geometric_mean"].idxmax()
+        self.best_weights_geometric = cast(dict[str, float], self.last_results.loc[best_index_geometric].to_dict())
         
-        return self.best_weights
+        best_index_volatility = self.last_results["volatility"].idxmin()
+        self.best_weights_volatility = cast(dict[str, float], self.last_results.loc[best_index_volatility].to_dict())
+
+        best_index_alejandro = self.last_results["alejandro_ratio"].idxmax()
+        self.best_weights_alejandro = cast(dict[str, float], self.last_results.loc[best_index_alejandro].to_dict())
+        
+        return self.best_weights_geometric, self.best_weights_volatility, self.best_weights_alejandro
     
     def compute_returns(self, weights: dict[str, float]) -> pd.Series:
         """
@@ -99,86 +110,68 @@ class MonteCarlo:
         
         return weights
     
-    def plot_geometric_arithmetic_means(self, k: int = 10) -> None:
+    def plot_geometric_arithmetic_means(self) -> None:
         """
         Plot the geometric and arithmetic means of the last simulation results.
-        It will include the assets results and the k best results according to 
-        the geometric mean.
-
-        Args:
-            k: Number of top results to display.
+        It will include the assets results and the best results of
+        highest geometric mean, lowest volatility and highest alejandro ratio.
         """
         
-        # Sort results by geometric mean
-        sorted_results = self.last_results.sort_values('geometric_mean', ascending=False)
-        
-        # Get top k results
-        top_k = sorted_results.head(k)
-        
-        # Create scatter plot
+        # Compute best geometric mean and lowest volatility portfolios
+        best_geometric = self.best_weights_geometric
+        best_volatility = self.best_weights_volatility
+        best_alejandro = self.best_weights_alejandro
+
+        returns_geometric = self.compute_returns(best_geometric)
+        returns_volatility = self.compute_returns(best_volatility)
+        returns_alejandro = self.compute_returns(best_alejandro)
+
+        # Plot assets returns
         plt.figure(figsize=(10, 6))
-        
-        # Plot top k results
+        for asset in self.returns.columns:
+            returns = self.compute_returns({asset: 1.0})
+            plt.scatter(
+                volatility(returns) * 100,
+                geometric_mean(returns) * 100,
+                marker='o',
+                s=100,
+                alpha=0.5,
+                label=asset
+            )
+        volatility_geometric, geometric_mean_geometric = volatility(returns_geometric) * 100, geometric_mean(returns_geometric) * 100
+        volatility_volatility, geometric_mean_volatility = volatility(returns_volatility) * 100, geometric_mean(returns_volatility) * 100
+        volatility_alejandro, geometric_mean_alejandro = volatility(returns_alejandro) * 100, geometric_mean(returns_alejandro) * 100
+
+        # Create scatter plot of volatility vs geometric mean
         plt.scatter(
-            top_k['arithmetic_mean'] * 100, 
-            top_k['geometric_mean'] * 100, 
-            color='green', 
-            s=100, 
-            label=f'Top {k} Portfolios'
-        )
-        
-        # Plot individual assets
-        asset_columns = [col for col in self.returns.columns]
-        for asset in asset_columns:
-            # Create a portfolio with 100% in this asset
-            asset_returns = cast(pd.Series, self.returns[asset])
-            arith_mean = arithmetic_mean(asset_returns) * 100
-            geo_mean = geometric_mean(asset_returns) * 100
-            plt.scatter(arith_mean, geo_mean, s=100, label=asset)
-        
-        # Highlight the best combination with a star
-        best_index = sorted_results['geometric_mean'].idxmax()
-        best_portfolio = sorted_results.loc[best_index]
-        plt.scatter(
-            best_portfolio['arithmetic_mean'] * 100,
-            best_portfolio['geometric_mean'] * 100,
-            marker='*', 
-            s=300, 
+            volatility_geometric,
+            geometric_mean_geometric,
+            marker='*',
+            s=300,
             color='red',
-            label='Best Portfolio'
+            label='Best Geometric Mean'
         )
-        
-        # Create annotation text with weights for best portfolio
-        weight_text = "Best Portfolio Weights:\n"
-        for asset in asset_columns:
-            if asset in best_portfolio and best_portfolio[asset] > 0:
-                weight_text += f"{asset}: {best_portfolio[asset]*100:.1f}%\n"
-        
-        # Add annotation for best portfolio
-        plt.annotate(
-            weight_text, 
-            xy=(best_portfolio['arithmetic_mean'] * 100, best_portfolio['geometric_mean'] * 100),
-            xytext=(20, 20),
-            textcoords="offset points",
-            bbox=dict(boxstyle="round,pad=0.5", fc="yellow", alpha=0.7)
+        plt.scatter(
+            volatility_volatility,
+            geometric_mean_volatility,
+            marker='d',
+            s=200,
+            color='blue',
+            label='Lowest Volatility'
         )
-        
-        # Add labels and title
-        plt.xlabel('Arithmetic Mean Return (%)')
+        plt.scatter(
+            volatility_alejandro,
+            geometric_mean_alejandro,
+            marker='s',
+            s=200,
+            color='green',
+            label='Highest Alejandro Ratio'
+        )
+
+        plt.xlabel('Volatility (%)')
         plt.ylabel('Geometric Mean Return (%)')
-        plt.title('Portfolio Optimization Results')
+        plt.title('Portfolio Optimization: Geometric Mean vs Volatility')
         plt.grid(True)
         plt.legend(loc='best')
-        
         plt.tight_layout()
         plt.show()
-        
-
-        
-        
-        
-        
-        
-        
-        
-    

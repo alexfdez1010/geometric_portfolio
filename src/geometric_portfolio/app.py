@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from geometric_portfolio.data import get_returns
 from geometric_portfolio.montecarlo import MonteCarlo
 from geometric_portfolio.metrics import summary, wealth
+from geometric_portfolio.plot import plot_wealth_evolution, plot_returns_distribution
 
 # Available tickers: map full names to symbols
 TICKERS = {
@@ -43,7 +44,7 @@ def get_inputs():
     start = st.sidebar.date_input("Start date", value=date(2020, 1, 1))
     end = st.sidebar.date_input("End date", value=date.today())
     num_sim = st.sidebar.number_input(
-        "Number of simulations", min_value=1000, max_value=20000, value=10000, step=1000
+        "Number of simulations", min_value=1000, max_value=1000000, value=10000, step=1000
     )
     run = st.sidebar.button("Run Simulation")
     return selected, start, end, num_sim, run
@@ -64,18 +65,36 @@ def main():
             end_date=end.isoformat()
         )
         mc = MonteCarlo(returns)
-        best_weights = mc.run(num_simulations=int(num_sim))
+        best_weights_geometric, best_weights_volatility, best_weights_alejandro = mc.run(num_simulations=int(num_sim))
 
     # Display best weights
     st.subheader("Best Portfolio Weights")
-    df_weights = pd.DataFrame.from_dict(best_weights, orient="index", columns=["Weight"])
-    df_weights["Weight"] = df_weights["Weight"].apply(lambda x: f"{x*100:.2f}%")
-    df_weights = df_weights.drop(["arithmetic_mean", "geometric_mean"], errors="ignore")
-    st.table(df_weights)
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.write("Highest Geometric Mean")
+        df_weights = pd.DataFrame.from_dict(best_weights_geometric, orient="index", columns=["Weight"])
+        df_weights["Weight"] = df_weights["Weight"].apply(lambda x: f"{x*100:.2f}%")
+        df_weights = df_weights.drop(["geometric_mean", "volatility", "alejandro_ratio"], errors="ignore")
+        st.table(df_weights)
+    with col2:
+        st.write("Lowest Volatility")
+        df_weights = pd.DataFrame.from_dict(best_weights_volatility, orient="index", columns=["Weight"])
+        df_weights["Weight"] = df_weights["Weight"].apply(lambda x: f"{x*100:.2f}%")
+        df_weights = df_weights.drop(["geometric_mean", "volatility", "alejandro_ratio"], errors="ignore")
+        st.table(df_weights)
+    with col3:
+        st.write("Highest Alejandro Ratio")
+        df_weights = pd.DataFrame.from_dict(best_weights_alejandro, orient="index", columns=["Weight"])
+        df_weights["Weight"] = df_weights["Weight"].apply(lambda x: f"{x*100:.2f}%")
+        df_weights = df_weights.drop(["geometric_mean", "volatility", "alejandro_ratio"], errors="ignore")
+        st.table(df_weights)
 
     # Summary table
     asset_returns = {asset: returns[asset] for asset in returns.columns}
-    asset_returns["Best Portfolio"] = mc.compute_returns(best_weights)
+    asset_returns["Best Portfolio (Geometric Mean)"] = mc.compute_returns(best_weights_geometric)
+    asset_returns["Best Portfolio (Lowest Volatility)"] = mc.compute_returns(best_weights_volatility)
+    asset_returns["Best Portfolio (Highest Alejandro Ratio)"] = mc.compute_returns(best_weights_alejandro)
+    
     rows = []
     for name, ret in asset_returns.items():
         s = summary(ret).rename(name)
@@ -83,29 +102,31 @@ def main():
     df_summary = pd.DataFrame(rows)
     percent_cols = [
         'Arithmetic Mean', 'Geometric Mean', 'Volatility', 'Max Drawdown',
-        'Best Day', 'Worst Day', 'Best Year', 'Worst Year', 'Sharpe Ratio'
+        'Best Day', 'Worst Day', 'Best Year', 'Worst Year'
     ]
     fmt_dict = {col: "{:.2%}" for col in percent_cols if col in df_summary.columns}
     styled = df_summary.style.format(fmt_dict)
     st.subheader("Portfolio Metrics Table")
     st.table(styled)
 
-    # Geometric vs Arithmetic Mean plot
-    st.subheader("Geometric vs Arithmetic Mean")
-    mc.plot_geometric_arithmetic_means(k=10)
+    # Geometric vs Volatility plot
+    st.subheader("Geometric vs Volatility")
+    mc.plot_geometric_arithmetic_means()
     st.pyplot(plt.gcf())
 
     # Wealth evolution plot
     st.subheader("Wealth Evolution")
     wealth_dict = {asset: wealth(returns[asset]) for asset in returns.columns}
-    wealth_dict["Best Portfolio"] = wealth(mc.compute_returns(best_weights))
-    df_wealth = pd.DataFrame(wealth_dict)
-    fig, ax = plt.subplots()
-    df_wealth.plot(ax=ax)
-    ax.set_title("Wealth Evolution")
-    ax.set_xlabel("Time")
-    ax.set_ylabel("Wealth")
-    ax.grid(True)
+    wealth_dict["Best Portfolio (Geometric Mean)"] = wealth(mc.compute_returns(best_weights_geometric))
+    wealth_dict["Best Portfolio (Lowest Volatility)"] = wealth(mc.compute_returns(best_weights_volatility))
+    wealth_dict["Best Portfolio (Highest Alejandro Ratio)"] = wealth(mc.compute_returns(best_weights_alejandro))
+    fig = plot_wealth_evolution(wealth_dict)
+    st.pyplot(fig)
+
+    # Returns distribution
+    st.subheader("Returns Distribution")
+    returns_dict = {asset: returns[asset] for asset in returns.columns}
+    fig = plot_returns_distribution(returns_dict)
     st.pyplot(fig)
 
 if __name__ == "__main__":
