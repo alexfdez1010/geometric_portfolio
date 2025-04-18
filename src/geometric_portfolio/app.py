@@ -114,18 +114,27 @@ def main():
     mc.plot_geometric_arithmetic_means()
     st.pyplot(plt.gcf())
 
+    returns_geometric = mc.compute_returns(best_weights_geometric)
+    returns_volatility = mc.compute_returns(best_weights_volatility)
+    returns_alejandro = mc.compute_returns(best_weights_alejandro)
+
     # Wealth evolution plot
     st.subheader("Wealth Evolution")
     wealth_dict = {asset: wealth(returns[asset]) for asset in returns.columns}
-    wealth_dict["Best Portfolio (Geometric Mean)"] = wealth(mc.compute_returns(best_weights_geometric))
-    wealth_dict["Best Portfolio (Lowest Volatility)"] = wealth(mc.compute_returns(best_weights_volatility))
-    wealth_dict["Best Portfolio (Highest Alejandro Ratio)"] = wealth(mc.compute_returns(best_weights_alejandro))
+    wealth_dict["Best Portfolio (Geometric Mean)"] = wealth(returns_geometric)
+    wealth_dict["Best Portfolio (Lowest Volatility)"] = wealth(returns_volatility)
+    wealth_dict["Best Portfolio (Highest Alejandro Ratio)"] = wealth(returns_alejandro)
     fig = plot_wealth_evolution(wealth_dict)
     st.pyplot(fig)
 
     # Returns distribution
     st.subheader("Returns Distribution")
-    returns_dict = {asset: returns[asset] for asset in returns.columns}
+    returns_dict = {
+        **{asset: returns[asset] for asset in returns.columns},
+        "Best Portfolio (Geometric Mean)": returns_geometric,
+        "Best Portfolio (Lowest Volatility)": returns_volatility,
+        "Best Portfolio (Highest Alejandro Ratio)": returns_alejandro
+    }
     fig = plot_returns_distribution(returns_dict)
     st.pyplot(fig)
 

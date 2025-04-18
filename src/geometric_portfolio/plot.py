@@ -18,20 +18,38 @@ def plot_wealth_evolution(wealth_dict):
     return fig
 
 
-def plot_returns_distribution(returns_dict, bins=50, alpha=0.5):
+def plot_returns_distribution(returns_dict, bins=50, alpha=0.5) -> plt.Figure:
     """
     Plot distribution of returns for multiple assets.
-    returns_dict: dict mapping asset names to return series (pd.Series).
-    bins: number of bins for histogram.
-    alpha: transparency for histogram bars.
-    Returns the matplotlib figure.
-    """
-    fig, ax = plt.subplots()
-    for name, series in returns_dict.items():
-        series.hist(ax=ax, bins=bins, alpha=alpha, label=name)
 
-    ax.set_title("Returns Distribution")
-    ax.set_xlabel("Returns")
-    ax.set_ylabel("Frequency")
-    ax.legend()
+    Args:
+        returns_dict: dict mapping asset names to return series (pd.Series).
+        bins: number of bins for histogram.
+        alpha: transparency for histogram bars.
+
+    Returns:
+        matplotlib figure.
+    """
+    num_plots = len(returns_dict)
+    cols = min(num_plots, 3)  # Maximum 3 columns
+    rows = (num_plots + cols - 1) // cols  # Calculate needed rows
+    
+    fig, axes = plt.subplots(rows, cols, figsize=(cols*4, rows*3))
+    axes = axes.flatten() if num_plots > 1 else [axes]
+    
+    for i, (name, series) in enumerate(returns_dict.items()):
+        # Normalize to percentages by using density=True and multiplying by 100
+        series.hist(ax=axes[i], bins=bins, alpha=alpha, label=name, density=True)
+        axes[i].set_title(f"{name} Returns")
+        axes[i].set_xlabel("Returns")
+        axes[i].set_ylabel("Percentage (%)")
+        # Convert y-axis to percentage
+        axes[i].yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: f'{y*100:.0f}'))
+        axes[i].legend()
+    
+    # Hide unused subplots
+    for j in range(num_plots, len(axes)):
+        axes[j].set_visible(False)
+    
+    plt.tight_layout()
     return fig
