@@ -31,6 +31,13 @@ TICKERS = {
     "Meta Platforms Inc. (META)": "META",
     "Berkshire Hathaway (BRK-B)": "BRK-B",
     "Walmart Inc. (WMT)": "WMT",
+    "Invesco S&P 500 Equal Weight ETF (RSP)": "RSP",
+    "First Trust NASDAQ-100 Equal Weighted Index Fund (QQEW)": "QQEW",
+    "Invesco S&P SmallCap 600 Equal Weight ETF (EWSC)": "EWSC",
+    "Invesco S&P MidCap 400 Equal Weight ETF (EWMC)": "EWMC",
+    "ProShares VIX Short-Term Futures ETF (VIXY)": "VIXY",
+    "ProShares VIX Mid-Term Futures ETF (VIXM)": "VIXM",
+    "ProShares Ultra VIX Short-Term Futures ETF (UVXY)": "UVXY",
 }
 
 def get_inputs():
@@ -104,7 +111,7 @@ def main():
     fmt_dict = {col: "{:.2%}" for col in percent_cols if col in df_summary.columns}
     styled = df_summary.style.format(fmt_dict)
     st.subheader("Portfolio Metrics Table")
-    st.table(styled)
+    st.dataframe(styled)
 
     # Geometric vs Volatility plot
     st.subheader("Geometric vs Volatility")
