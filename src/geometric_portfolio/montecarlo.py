@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-from geometric_portfolio.metrics import annual_return, cagr
+from geometric_portfolio.metrics import geometric_mean, arithmetic_mean
 
 class MonteCarlo:
     """
@@ -43,8 +43,8 @@ class MonteCarlo:
 
             last_simulation = pd.DataFrame([{
                 **{asset: weights[asset] for asset in assets},
-                "arithmetic_mean": annual_return(returns),
-                "geometric_mean": cagr(returns)
+                "arithmetic_mean": arithmetic_mean(returns),
+                "geometric_mean": geometric_mean(returns)
             }])
             
             self.last_results = pd.concat([self.last_results, last_simulation], ignore_index=True)
@@ -132,9 +132,36 @@ class MonteCarlo:
         for asset in asset_columns:
             # Create a portfolio with 100% in this asset
             asset_returns = cast(pd.Series, self.returns[asset])
-            arith_mean = annual_return(asset_returns) * 100
-            geo_mean = cagr(asset_returns) * 100
+            arith_mean = arithmetic_mean(asset_returns) * 100
+            geo_mean = geometric_mean(asset_returns) * 100
             plt.scatter(arith_mean, geo_mean, s=100, label=asset)
+        
+        # Highlight the best combination with a star
+        best_index = sorted_results['geometric_mean'].idxmax()
+        best_portfolio = sorted_results.loc[best_index]
+        plt.scatter(
+            best_portfolio['arithmetic_mean'] * 100,
+            best_portfolio['geometric_mean'] * 100,
+            marker='*', 
+            s=300, 
+            color='red',
+            label='Best Portfolio'
+        )
+        
+        # Create annotation text with weights for best portfolio
+        weight_text = "Best Portfolio Weights:\n"
+        for asset in asset_columns:
+            if asset in best_portfolio and best_portfolio[asset] > 0:
+                weight_text += f"{asset}: {best_portfolio[asset]*100:.1f}%\n"
+        
+        # Add annotation for best portfolio
+        plt.annotate(
+            weight_text, 
+            xy=(best_portfolio['arithmetic_mean'] * 100, best_portfolio['geometric_mean'] * 100),
+            xytext=(20, 20),
+            textcoords="offset points",
+            bbox=dict(boxstyle="round,pad=0.5", fc="yellow", alpha=0.7)
+        )
         
         # Add labels and title
         plt.xlabel('Arithmetic Mean Return (%)')

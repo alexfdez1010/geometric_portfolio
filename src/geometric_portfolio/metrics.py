@@ -3,46 +3,35 @@ import pandas as pd
 from typing import cast
 
 
-def arithmetic_mean(returns: pd.Series) -> float:
+def arithmetic_mean(returns: pd.Series, periods_per_year: int = 252) -> float:
     """
     Calculate the arithmetic mean of daily returns.
 
     Args:
         returns: Series of daily returns.
+        periods_per_year: Trading periods per year (default is 252).
 
     Returns:
         float: Arithmetic mean of the returns.
     """
-    return cast(float, returns.mean())
+    return cast(float, returns.mean() * periods_per_year)
 
 
-def geometric_mean(returns: pd.Series) -> float:
+def geometric_mean(returns: pd.Series, periods_per_year: int = 252) -> float:
     """
     Calculate the geometric mean (compound average) of daily returns.
 
     Args:
         returns: Series of daily returns.
+        periods_per_year: Trading periods per year (default is 252).
 
     Returns:
-        float: Geometric mean of the returns.
+        float: Geometric mean of the returns, annualized.
     """
-    return np.exp(np.log1p(returns).mean()) - 1
+    return np.prod(1 + returns) ** (periods_per_year / len(returns)) - 1
 
 
-def volatility(returns: pd.Series) -> float:
-    """
-    Calculate the daily volatility (standard deviation) of returns.
-
-    Args:
-        returns: Series of daily returns.
-
-    Returns:
-        float: Daily volatility of the returns.
-    """
-    return cast(float, returns.std(ddof=1))
-
-
-def annual_volatility(returns: pd.Series, periods_per_year: int = 252) -> float:
+def volatility(returns: pd.Series, periods_per_year: int = 252) -> float:
     """
     Calculate the annualized volatility of returns.
 
@@ -54,35 +43,6 @@ def annual_volatility(returns: pd.Series, periods_per_year: int = 252) -> float:
         float: Annualized volatility of the returns.
     """
     return cast(float, returns.std(ddof=1) * np.sqrt(periods_per_year))
-
-
-def annual_return(returns: pd.Series, periods_per_year: int = 252) -> float:
-    """
-    Calculate the annualized arithmetic return of returns.
-
-    Args:
-        returns: Series of daily returns.
-        periods_per_year: Trading periods per year (default is 252).
-
-    Returns:
-        float: Annualized arithmetic return of the returns.
-    """
-    return cast(float, returns.mean() * periods_per_year)
-
-
-def cagr(returns: pd.Series, periods_per_year: int = 252) -> float:
-    """
-    Calculate the Compound Annual Growth Rate (CAGR) of returns.
-
-    Args:
-        returns: Series of daily returns.
-        periods_per_year: Trading periods per year (default is 252).
-
-    Returns:
-        float: CAGR of the returns.
-    """
-    daily_geo_mean = geometric_mean(returns)
-    return (1 + daily_geo_mean) ** periods_per_year - 1
 
 
 def sharpe_ratio(returns: pd.Series, risk_free_rate: float = 0.0, periods_per_year: int = 252) -> float:
@@ -190,9 +150,6 @@ def summary(returns: pd.Series, risk_free_rate: float = 0.0, periods_per_year: i
         'Arithmetic Mean': arithmetic_mean(returns),
         'Geometric Mean': geometric_mean(returns),
         'Volatility': volatility(returns),
-        'Annual Volatility': annual_volatility(returns, periods_per_year),
-        'Annual Return': annual_return(returns, periods_per_year),
-        'CAGR': cagr(returns, periods_per_year),
         'Sharpe Ratio': sharpe_ratio(returns, risk_free_rate, periods_per_year),
         'Max Drawdown': max_drawdown(returns),
         'Best Day': best_day(returns),
@@ -201,5 +158,18 @@ def summary(returns: pd.Series, risk_free_rate: float = 0.0, periods_per_year: i
         'Worst Year': worst_year(returns),
     }
     summary_series = pd.Series(metrics)
-    print("Portfolio Metrics Summary:\n", summary_series)
     return summary_series
+
+def wealth(returns: pd.Series, initial_wealth: float = 1.0) -> pd.Series:
+    """
+    Compute the wealth index from returns.
+
+    Args:
+        returns: Series of daily returns.
+        initial_wealth: Initial wealth value (default is 1.0).
+
+    Returns:
+        pd.Series: Series of computed wealth index.
+    """
+    return (1 + returns).cumprod() * initial_wealth
+    
