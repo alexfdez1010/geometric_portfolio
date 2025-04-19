@@ -3,10 +3,12 @@ from datetime import date
 import pandas as pd
 import matplotlib.pyplot as plt
 
+from geometric_portfolio.plot import plot_wealth_evolution, plot_returns_distribution
+from geometric_portfolio.metrics import wealth
 from geometric_portfolio.data import get_returns
 from geometric_portfolio.solver import PortfolioSolver
-from geometric_portfolio.metrics import summary, wealth
-from geometric_portfolio.plot import plot_wealth_evolution, plot_returns_distribution
+from geometric_portfolio.backtesting import backtesting
+from geometric_portfolio.metrics import summary
 
 # Available tickers: map full names to symbols
 TICKERS = {
@@ -50,13 +52,17 @@ def get_inputs():
     selected = [TICKERS[name] for name in selected_names]
     start = st.sidebar.date_input("Start date", value=date(2020, 1, 1))
     end = st.sidebar.date_input("End date", value=date.today())
+    initial_amount = st.sidebar.number_input("Initial amount", min_value=1000, value=10000, step=100)
+    acceptable_diff = st.sidebar.number_input("Acceptable difference", min_value=0.0, max_value=1.0, value=0.05, step=0.01)
+    fixed_cost = st.sidebar.number_input("Fixed cost", min_value=0.0, value=1.0, step=0.1)
+    variable_cost = st.sidebar.number_input("Variable cost", min_value=0.0, max_value=1.0, value=0.0, step=0.01)
     run = st.sidebar.button("Calculate portfolios", type="primary")
-    return selected, start, end, run
+    return selected, start, end, initial_amount, acceptable_diff, fixed_cost, variable_cost, run
 
 def main():
     st.set_page_config(page_title="Geometric Portfolio Explorer")
     st.title("Geometric Portfolio Explorer")
-    selected, start, end, run = get_inputs()
+    selected, start, end, initial_amount, acceptable_diff, fixed_cost, variable_cost, run = get_inputs()
     if not run:
         return
     if not selected:
@@ -95,9 +101,42 @@ def main():
 
     # Summary table
     asset_returns = {asset: returns[asset] for asset in returns.columns}
-    asset_returns["Best Portfolio (Geometric Mean)"] = solver.compute_returns(best_weights_geometric)
-    asset_returns["Best Portfolio (Lowest Volatility)"] = solver.compute_returns(best_weights_volatility)
-    asset_returns["Best Portfolio (Highest Alejandro Ratio)"] = solver.compute_returns(best_weights_alejandro)
+    asset_returns["Geometric Mean"] = backtesting(
+        initial_amount=initial_amount,
+        tickers=list(best_weights_geometric.keys()), 
+        weights=list(best_weights_geometric.values()), 
+        start_date=start.isoformat(), 
+        end_date=end.isoformat(), 
+        acceptable_diff=acceptable_diff, 
+        fixed_cost=fixed_cost, 
+        variable_cost=variable_cost
+    )[0]
+    
+    asset_returns["Volatility"] = backtesting(
+        initial_amount=initial_amount,
+        tickers=list(best_weights_volatility.keys()), 
+        weights=list(best_weights_volatility.values()), 
+        start_date=start.isoformat(), 
+        end_date=end.isoformat(), 
+        acceptable_diff=acceptable_diff, 
+        fixed_cost=fixed_cost, 
+        variable_cost=variable_cost
+    )[0]
+    
+    asset_returns["Alejandro Ratio"] = backtesting(
+        initial_amount=initial_amount,
+        tickers=list(best_weights_alejandro.keys()), 
+        weights=list(best_weights_alejandro.values()), 
+        start_date=start.isoformat(), 
+        end_date=end.isoformat(), 
+        acceptable_diff=acceptable_diff, 
+        fixed_cost=fixed_cost, 
+        variable_cost=variable_cost
+    )[0]
+
+    print(asset_returns["Geometric Mean"])
+    print(asset_returns["Volatility"])
+    print(asset_returns["Alejandro Ratio"])
     
     rows = []
     for name, ret in asset_returns.items():
@@ -125,9 +164,9 @@ def main():
     # Wealth evolution plot
     st.subheader("Wealth Evolution")
     wealth_dict = {asset: wealth(returns[asset]) for asset in returns.columns}
-    wealth_dict["Best Portfolio (Geometric Mean)"] = wealth(returns_geometric)
-    wealth_dict["Best Portfolio (Lowest Volatility)"] = wealth(returns_volatility)
-    wealth_dict["Best Portfolio (Highest Alejandro Ratio)"] = wealth(returns_alejandro)
+    wealth_dict["Geometric Mean"] = wealth(returns_geometric)
+    wealth_dict["Lowest Volatility"] = wealth(returns_volatility)
+    wealth_dict["Highest Alejandro Ratio"] = wealth(returns_alejandro)
     fig = plot_wealth_evolution(wealth_dict)
     st.pyplot(fig)
 
@@ -135,9 +174,9 @@ def main():
     st.subheader("Returns Distribution")
     returns_dict = {
         **{asset: returns[asset] for asset in returns.columns},
-        "Best Portfolio (Geometric Mean)": returns_geometric,
-        "Best Portfolio (Lowest Volatility)": returns_volatility,
-        "Best Portfolio (Highest Alejandro Ratio)": returns_alejandro
+        "Geometric Mean": returns_geometric,
+        "Lowest Volatility": returns_volatility,
+        "Highest Alejandro Ratio": returns_alejandro
     }
     fig = plot_returns_distribution(returns_dict)
     st.pyplot(fig)

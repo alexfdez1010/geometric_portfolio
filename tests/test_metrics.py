@@ -7,7 +7,7 @@ def test_arithmetic_mean():
     returns = pd.Series([0.01, 0.02, 0.03, -0.01])
     periods_per_year = 252
     result = metrics.arithmetic_mean(returns, periods_per_year=periods_per_year)
-    expected = returns.mean() * periods_per_year
+    expected = (1 + returns.mean()) ** periods_per_year - 1
     assert np.isclose(result, expected)
 
 def test_geometric_mean():
