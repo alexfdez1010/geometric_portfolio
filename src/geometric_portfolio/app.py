@@ -4,11 +4,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 from geometric_portfolio.plot import plot_wealth_evolution, plot_returns_distribution
-from geometric_portfolio.metrics import wealth
+from geometric_portfolio.metrics import wealth, summary
 from geometric_portfolio.data import get_returns
 from geometric_portfolio.solver import PortfolioSolver
 from geometric_portfolio.backtesting import backtesting
-from geometric_portfolio.metrics import summary
 
 # Available tickers: map full names to symbols
 TICKERS = {
@@ -42,7 +41,129 @@ TICKERS = {
     "ProShares Ultra VIX Short-Term Futures ETF (UVXY)": "UVXY",
 }
 
-def get_inputs():
+
+def display_weights(criteria: list[tuple[str, dict[str, float]]]):
+    """
+    Display the best portfolio weights for each objective.
+
+    Args:
+        criteria: List of tuples (title, weights) where weights is a dict of asset weights.
+    """
+    st.subheader("Best Portfolio Weights")
+    cols = st.columns(len(criteria))
+    for col, (title, weights) in zip(cols, criteria):
+        with col:
+            st.write(title)
+            dfw = pd.DataFrame.from_dict(weights, orient="index", columns=["Weight"])
+            dfw["Weight"] = dfw["Weight"].apply(lambda x: f"{x*100:.2f}%")
+            dfw = dfw.drop(["geometric_mean", "volatility", "alejandro_ratio"], errors="ignore")
+            st.table(dfw)
+
+def compute_asset_returns(
+    returns: pd.DataFrame,
+    criteria: list[tuple[str, dict[str, float]]],
+    initial_amount: float,
+    acceptable_diff: float,
+    fixed_cost: float,
+    variable_cost: float,
+    start: date,
+    end: date
+) -> dict[str, pd.Series]:
+    """
+    Compute returns for each asset and portfolio.
+
+    Args:
+        returns: pd.DataFrame of asset returns.
+        criteria: List of tuples (title, weights) where weights is a dict of asset weights.
+        initial_amount: Initial amount of money to invest.
+        acceptable_diff: Threshold for weight deviation to trigger rebalancing.
+        fixed_cost: Fixed transaction cost per trade.
+        variable_cost: Variable transaction cost as a fraction of trade value.
+        start: Backtest start date.
+        end: Backtest end date.
+
+    Returns:
+        dict[str, pd.Series] of returns for each asset and portfolio.
+    """
+    asset_returns = {asset: returns[asset] for asset in returns.columns}
+    for title, weights in criteria:
+        try:
+            asset_returns[title] = backtesting(
+                initial_amount=initial_amount,
+                tickers=list(weights.keys()),
+                weights=list(weights.values()),
+                start_date=start.isoformat(),
+                end_date=end.isoformat(),
+                acceptable_diff=acceptable_diff,
+                fixed_cost=fixed_cost,
+                variable_cost=variable_cost
+            )[0]
+        except Exception:
+            asset_returns[title] = None
+    return asset_returns
+
+def show_summary(asset_returns: dict[str, pd.Series]):
+    """
+    Display summary statistics for each portfolio.
+
+    Args:
+        asset_returns: dict[str, pd.Series] of returns for each asset and portfolio.
+    """
+    rows = []
+    for title, ret in asset_returns.items():
+        if ret is None:
+            s = pd.Series(dtype=float).rename(title)
+        else:
+            s = summary(ret).rename(title)
+        rows.append(s)
+    df = pd.DataFrame(rows)
+    percent_cols = [
+        'Arithmetic Mean', 'Geometric Mean', 'Volatility', 'Max Drawdown',
+        'Best Day', 'Worst Day', 'Best Year', 'Worst Year'
+    ]
+    fmt_dict = {col: "{:.2%}" for col in percent_cols if col in df.columns}
+    styled = df.style.format(fmt_dict)
+    st.subheader("Portfolio Metrics Table")
+    st.dataframe(styled)
+
+def plot_results(returns: pd.DataFrame, criteria: list[tuple[str, dict[str, float]]], solver: PortfolioSolver):
+    """
+    Plot wealth evolution and returns distribution for each portfolio.
+
+    Args:
+        returns: pd.DataFrame of asset returns.
+        criteria: List of tuples (title, weights) where weights is a dict of asset weights.
+        solver: PortfolioSolver instance.
+    """
+    st.subheader("Geometric vs Volatility")
+    solver.plot_geometric_volatility_means()
+    st.pyplot(plt.gcf())
+    # Compute returns for each portfolio
+    returns_dict = {asset: returns[asset] for asset in returns.columns}
+    for title, weights in criteria:
+        try:
+            returns_dict[title] = solver.compute_returns(weights)
+        except Exception:
+            returns_dict[title] = pd.Series(dtype=float)
+    # Wealth evolution
+    st.subheader("Wealth Evolution")
+    wealth_dict = {asset: wealth(returns[asset]) for asset in returns.columns}
+    for title, _ in criteria:
+        wealth_dict[title] = wealth(returns_dict[title])
+    fig = plot_wealth_evolution(wealth_dict)
+    st.pyplot(fig)
+    # Returns distribution
+    st.subheader("Returns Distribution")
+    fig2 = plot_returns_distribution(returns_dict)
+    st.pyplot(fig2)
+
+def get_inputs() -> tuple[list[str], date, date, float, float, float, float, bool]:
+    """
+    Get user inputs from the sidebar.
+
+    Returns:
+        tuple: A tuple containing the selected assets, start date, end date, initial amount, acceptable difference, fixed cost, variable cost, and run flag.
+    """
     st.sidebar.header("Inputs")
     selected_names = st.sidebar.multiselect(
         "Select assets",
@@ -68,118 +189,39 @@ def main():
     if not selected:
         st.warning("Please select at least one asset.")
         return
+
     with st.spinner("Fetching data and running simulation..."):
-        returns = get_returns(
-            tickets=selected,
-            start_date=start.isoformat(),
-            end_date=end.isoformat()
-        )
-        solver = PortfolioSolver(returns)
-        best_weights_geometric, best_weights_volatility, best_weights_alejandro = solver.run()
+        try:
+            returns = get_returns(
+                tickets=selected,
+                start_date=start.isoformat(),
+                end_date=end.isoformat()
+            )
+            solver = PortfolioSolver(returns)
+            best_weights_geometric, best_weights_volatility, best_weights_alejandro = solver.run()
+        except Exception as e:
+            st.error(f"Error in optimization: {e}")
+            return
 
-    # Display best weights
-    st.subheader("Best Portfolio Weights")
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.write("Highest Geometric Mean")
-        df_weights = pd.DataFrame.from_dict(best_weights_geometric, orient="index", columns=["Weight"])
-        df_weights["Weight"] = df_weights["Weight"].apply(lambda x: f"{x*100:.2f}%")
-        df_weights = df_weights.drop(["geometric_mean", "volatility", "alejandro_ratio"], errors="ignore")
-        st.table(df_weights)
-    with col2:
-        st.write("Lowest Volatility")
-        df_weights = pd.DataFrame.from_dict(best_weights_volatility, orient="index", columns=["Weight"])
-        df_weights["Weight"] = df_weights["Weight"].apply(lambda x: f"{x*100:.2f}%")
-        df_weights = df_weights.drop(["geometric_mean", "volatility", "alejandro_ratio"], errors="ignore")
-        st.table(df_weights)
-    with col3:
-        st.write("Highest Alejandro Ratio")
-        df_weights = pd.DataFrame.from_dict(best_weights_alejandro, orient="index", columns=["Weight"])
-        df_weights["Weight"] = df_weights["Weight"].apply(lambda x: f"{x*100:.2f}%")
-        df_weights = df_weights.drop(["geometric_mean", "volatility", "alejandro_ratio"], errors="ignore")
-        st.table(df_weights)
-
-    # Summary table
-    asset_returns = {asset: returns[asset] for asset in returns.columns}
-    asset_returns["Geometric Mean"] = backtesting(
-        initial_amount=initial_amount,
-        tickers=list(best_weights_geometric.keys()), 
-        weights=list(best_weights_geometric.values()), 
-        start_date=start.isoformat(), 
-        end_date=end.isoformat(), 
-        acceptable_diff=acceptable_diff, 
-        fixed_cost=fixed_cost, 
-        variable_cost=variable_cost
-    )[0]
-    
-    asset_returns["Volatility"] = backtesting(
-        initial_amount=initial_amount,
-        tickers=list(best_weights_volatility.keys()), 
-        weights=list(best_weights_volatility.values()), 
-        start_date=start.isoformat(), 
-        end_date=end.isoformat(), 
-        acceptable_diff=acceptable_diff, 
-        fixed_cost=fixed_cost, 
-        variable_cost=variable_cost
-    )[0]
-    
-    asset_returns["Alejandro Ratio"] = backtesting(
-        initial_amount=initial_amount,
-        tickers=list(best_weights_alejandro.keys()), 
-        weights=list(best_weights_alejandro.values()), 
-        start_date=start.isoformat(), 
-        end_date=end.isoformat(), 
-        acceptable_diff=acceptable_diff, 
-        fixed_cost=fixed_cost, 
-        variable_cost=variable_cost
-    )[0]
-
-    print(asset_returns["Geometric Mean"])
-    print(asset_returns["Volatility"])
-    print(asset_returns["Alejandro Ratio"])
-    
-    rows = []
-    for name, ret in asset_returns.items():
-        s = summary(ret).rename(name)
-        rows.append(s)
-    df_summary = pd.DataFrame(rows)
-    percent_cols = [
-        'Arithmetic Mean', 'Geometric Mean', 'Volatility', 'Max Drawdown',
-        'Best Day', 'Worst Day', 'Best Year', 'Worst Year'
+    criteria = [
+        ("Highest Geometric Mean", best_weights_geometric),
+        ("Lowest Volatility", best_weights_volatility),
+        ("Highest Alejandro Ratio", best_weights_alejandro)
     ]
-    fmt_dict = {col: "{:.2%}" for col in percent_cols if col in df_summary.columns}
-    styled = df_summary.style.format(fmt_dict)
-    st.subheader("Portfolio Metrics Table")
-    st.dataframe(styled)
+    display_weights(criteria)
 
-    # Geometric vs Volatility plot
-    st.subheader("Geometric vs Volatility")
-    solver.plot_geometric_volatility_means()
-    st.pyplot(plt.gcf())
-
-    returns_geometric = solver.compute_returns(best_weights_geometric)
-    returns_volatility = solver.compute_returns(best_weights_volatility)
-    returns_alejandro = solver.compute_returns(best_weights_alejandro)
-
-    # Wealth evolution plot
-    st.subheader("Wealth Evolution")
-    wealth_dict = {asset: wealth(returns[asset]) for asset in returns.columns}
-    wealth_dict["Geometric Mean"] = wealth(returns_geometric)
-    wealth_dict["Lowest Volatility"] = wealth(returns_volatility)
-    wealth_dict["Highest Alejandro Ratio"] = wealth(returns_alejandro)
-    fig = plot_wealth_evolution(wealth_dict)
-    st.pyplot(fig)
-
-    # Returns distribution
-    st.subheader("Returns Distribution")
-    returns_dict = {
-        **{asset: returns[asset] for asset in returns.columns},
-        "Geometric Mean": returns_geometric,
-        "Lowest Volatility": returns_volatility,
-        "Highest Alejandro Ratio": returns_alejandro
-    }
-    fig = plot_returns_distribution(returns_dict)
-    st.pyplot(fig)
+    asset_returns = compute_asset_returns(
+        returns,
+        criteria,
+        initial_amount,
+        acceptable_diff,
+        fixed_cost,
+        variable_cost,
+        start,
+        end
+    )
+    show_summary(asset_returns)
+    plot_results(returns, criteria, solver)
 
 if __name__ == "__main__":
     main()
