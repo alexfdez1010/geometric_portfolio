@@ -1,5 +1,5 @@
 app:
-	uv run streamlit run src/geometric_portfolio/app.py
+	uv run streamlit run src/geometric_portfolio/Geometric_Mean.py
 
 main:
 	uv run src/geometric_portfolio/main.py

@@ -2,11 +2,15 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 
-def plot_wealth_evolution(wealth_dict):
+def plot_wealth_evolution(wealth_dict: dict[str, pd.Series | list[float]]) -> plt.Figure:
     """
     Plot wealth evolution over time.
-    wealth_dict: dict mapping asset names to wealth time series (pd.Series or list).
-    Returns the matplotlib figure.
+    
+    Args:
+        wealth_dict: dict mapping asset names to wealth time series (pd.Series or list).
+    
+    Returns:
+        Matplotlib figure.
     """
     df = pd.DataFrame(wealth_dict)
     fig, ax = plt.subplots()
@@ -18,7 +22,7 @@ def plot_wealth_evolution(wealth_dict):
     return fig
 
 
-def plot_returns_distribution(returns_dict, bins=50, alpha=0.5) -> plt.Figure:
+def plot_returns_distribution(returns_dict: dict[str, pd.Series], bins=50, alpha=0.5) -> plt.Figure:
     """
     Plot distribution of returns for multiple assets.
 
@@ -28,7 +32,7 @@ def plot_returns_distribution(returns_dict, bins=50, alpha=0.5) -> plt.Figure:
         alpha: transparency for histogram bars.
 
     Returns:
-        matplotlib figure.
+        Matplotlib figure.
     """
     num_plots = len(returns_dict)
     cols = min(num_plots, 3)  # Maximum 3 columns

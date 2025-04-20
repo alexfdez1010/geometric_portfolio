@@ -8,54 +8,7 @@ from geometric_portfolio.metrics import wealth, summary
 from geometric_portfolio.data import get_returns
 from geometric_portfolio.solver import PortfolioSolver
 from geometric_portfolio.backtesting import backtesting
-
-# Available tickers: map full names to symbols
-TICKERS = {
-    "S&P 500 (VOO)": "VOO",
-    "Nasdaq (QQQ)": "QQQ",
-    "SPDR Dow Jones (DIA)": "DIA",
-    "SPDR Gold Trust (GLD)": "GLD",
-    "iShares Silver Trust (SLV)": "SLV",
-    "S&P 500 VIX Short-term Futures Index (VIXL.L)": "VIXL.L",
-    "Bitcoin (BTC-USD)": "BTC-USD",
-    "Ethereum (ETH-USD)": "ETH-USD",
-    "United States Oil (USO)": "USO",
-    "iShares 20+ Year Treasury (TLT)": "TLT",
-    "iShares 7-10 Year Treasury (IEF)": "IEF",
-    "iPath S&P 500 VIX (VXX)": "VXX",
-    "Apple Inc. (AAPL)": "AAPL",
-    "Microsoft Corp. (MSFT)": "MSFT",
-    "Alphabet Inc. (GOOGL)": "GOOGL",
-    "Amazon.com Inc. (AMZN)": "AMZN",
-    "NVIDIA Corp. (NVDA)": "NVDA",
-    "Tesla Inc. (TSLA)": "TSLA",
-    "Meta Platforms Inc. (META)": "META",
-    "Berkshire Hathaway (BRK-B)": "BRK-B",
-    "Walmart Inc. (WMT)": "WMT",
-    "Invesco S&P 500 Equal Weight ETF (RSP)": "RSP",
-    "First Trust NASDAQ-100 Equal Weighted Index Fund (QQEW)": "QQEW",
-    "Invesco S&P SmallCap 600 Equal Weight ETF (EWSC)": "EWSC",
-    "Invesco S&P MidCap 400 Equal Weight ETF (EWMC)": "EWMC",
-    "ProShares VIX Short-Term Futures ETF (VIXY)": "VIXY",
-    "ProShares VIX Mid-Term Futures ETF (VIXM)": "VIXM",
-    "ProShares Ultra VIX Short-Term Futures ETF (UVXY)": "UVXY",
-    "ProShares Ultra S&P500 (SSO)": "SSO",
-    "ProShares UltraPro QQQ (TQQQ)": "TQQQ",
-    "ProShares Ultra Gold (UGL)": "UGL",
-    "Direxion Daily Gold Miners Bull 2X Shares (NUGT)": "NUGT",
-    "ProShares Ultra Silver (AGQ)": "AGQ",
-}
-
-# Asset categories for UI grouping
-CATEGORIES = {
-    "Equity ETFs": ["S&P 500 (VOO)", "Nasdaq (QQQ)", "SPDR Dow Jones (DIA)", "Invesco S&P 500 Equal Weight ETF (RSP)", "First Trust NASDAQ-100 Equal Weighted Index Fund (QQEW)", "Invesco S&P SmallCap 600 Equal Weight ETF (EWSC)", "Invesco S&P MidCap 400 Equal Weight ETF (EWMC)"],
-    "Leveraged ETFs": ["ProShares Ultra S&P500 (SSO)", "ProShares UltraPro QQQ (TQQQ)", "ProShares Ultra Gold (UGL)", "Direxion Daily Gold Miners Bull 2X Shares (NUGT)", "ProShares Ultra Silver (AGQ)"],
-    "Crypto": ["Bitcoin (BTC-USD)", "Ethereum (ETH-USD)"],
-    "Commodities": ["SPDR Gold Trust (GLD)", "iShares Silver Trust (SLV)", "United States Oil (USO)"],
-    "Treasuries": ["iShares 20+ Year Treasury (TLT)", "iShares 7-10 Year Treasury (IEF)"],
-    "VIX ETFs": ["S&P 500 VIX Short-term Futures Index (VIXL.L)", "iPath S&P 500 VIX (VXX)", "ProShares VIX Short-Term Futures ETF (VIXY)", "ProShares VIX Mid-Term Futures ETF (VIXM)", "ProShares Ultra VIX Short-Term Futures ETF (UVXY)"],
-    "Stocks": ["Apple Inc. (AAPL)", "Microsoft Corp. (MSFT)", "Alphabet Inc. (GOOGL)", "Amazon.com Inc. (AMZN)", "NVIDIA Corp. (NVDA)", "Tesla Inc. (TSLA)", "Meta Platforms Inc. (META)", "Berkshire Hathaway (BRK-B)", "Walmart Inc. (WMT)"]
-}
+from geometric_portfolio.tickers import TICKERS, CATEGORIES
 
 def display_weights(criteria: list[tuple[str, dict[str, float]]]):
     """
@@ -175,6 +128,9 @@ def plot_results(returns: pd.DataFrame, criteria: list[tuple[str, dict[str, floa
 def get_inputs() -> tuple[list[str], date, date, float, float, float, float, bool]:
     """
     Get user inputs from the sidebar.
+
+    Returns:
+        tuple of selected tickers, start date, end date, initial amount, acceptable difference, fixed cost, variable cost, run button.
     """
     st.sidebar.header("Inputs")
     # Grouped asset selection by category
