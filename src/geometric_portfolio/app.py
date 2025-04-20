@@ -39,8 +39,23 @@ TICKERS = {
     "ProShares VIX Short-Term Futures ETF (VIXY)": "VIXY",
     "ProShares VIX Mid-Term Futures ETF (VIXM)": "VIXM",
     "ProShares Ultra VIX Short-Term Futures ETF (UVXY)": "UVXY",
+    "ProShares Ultra S&P500 (SSO)": "SSO",
+    "ProShares UltraPro QQQ (TQQQ)": "TQQQ",
+    "ProShares Ultra Gold (UGL)": "UGL",
+    "Direxion Daily Gold Miners Bull 2X Shares (NUGT)": "NUGT",
+    "ProShares Ultra Silver (AGQ)": "AGQ",
 }
 
+# Asset categories for UI grouping
+CATEGORIES = {
+    "Equity ETFs": ["S&P 500 (VOO)", "Nasdaq (QQQ)", "SPDR Dow Jones (DIA)", "Invesco S&P 500 Equal Weight ETF (RSP)", "First Trust NASDAQ-100 Equal Weighted Index Fund (QQEW)", "Invesco S&P SmallCap 600 Equal Weight ETF (EWSC)", "Invesco S&P MidCap 400 Equal Weight ETF (EWMC)"],
+    "Leveraged ETFs": ["ProShares Ultra S&P500 (SSO)", "ProShares UltraPro QQQ (TQQQ)", "ProShares Ultra Gold (UGL)", "Direxion Daily Gold Miners Bull 2X Shares (NUGT)", "ProShares Ultra Silver (AGQ)"],
+    "Crypto": ["Bitcoin (BTC-USD)", "Ethereum (ETH-USD)"],
+    "Commodities": ["SPDR Gold Trust (GLD)", "iShares Silver Trust (SLV)", "United States Oil (USO)"],
+    "Treasuries": ["iShares 20+ Year Treasury (TLT)", "iShares 7-10 Year Treasury (IEF)"],
+    "VIX ETFs": ["S&P 500 VIX Short-term Futures Index (VIXL.L)", "iPath S&P 500 VIX (VXX)", "ProShares VIX Short-Term Futures ETF (VIXY)", "ProShares VIX Mid-Term Futures ETF (VIXM)", "ProShares Ultra VIX Short-Term Futures ETF (UVXY)"],
+    "Stocks": ["Apple Inc. (AAPL)", "Microsoft Corp. (MSFT)", "Alphabet Inc. (GOOGL)", "Amazon.com Inc. (AMZN)", "NVIDIA Corp. (NVDA)", "Tesla Inc. (TSLA)", "Meta Platforms Inc. (META)", "Berkshire Hathaway (BRK-B)", "Walmart Inc. (WMT)"]
+}
 
 def display_weights(criteria: list[tuple[str, dict[str, float]]]):
     """
@@ -55,8 +70,8 @@ def display_weights(criteria: list[tuple[str, dict[str, float]]]):
         with col:
             st.write(title)
             dfw = pd.DataFrame.from_dict(weights, orient="index", columns=["Weight"])
+            dfw = dfw[dfw["Weight"] > 0.01]
             dfw["Weight"] = dfw["Weight"].apply(lambda x: f"{x*100:.2f}%")
-            dfw = dfw.drop(["geometric_mean", "volatility", "alejandro_ratio"], errors="ignore")
             st.table(dfw)
 
 def compute_asset_returns(
@@ -160,16 +175,31 @@ def plot_results(returns: pd.DataFrame, criteria: list[tuple[str, dict[str, floa
 def get_inputs() -> tuple[list[str], date, date, float, float, float, float, bool]:
     """
     Get user inputs from the sidebar.
-
-    Returns:
-        tuple: A tuple containing the selected assets, start date, end date, initial amount, acceptable difference, fixed cost, variable cost, and run flag.
     """
     st.sidebar.header("Inputs")
-    selected_names = st.sidebar.multiselect(
-        "Select assets",
-        list(TICKERS.keys()),
-        default=["S&P 500 (VOO)", "Nasdaq (QQQ)", "SPDR Dow Jones (DIA)", "SPDR Gold Trust (GLD)"]
-    )
+    # Grouped asset selection by category
+    selected_names: list[str] = []
+    with st.sidebar.expander("Equity ETFs", expanded=True):
+        sel_equity = st.multiselect("Equity ETFs", CATEGORIES["Equity ETFs"], default=["S&P 500 (VOO)", "Nasdaq (QQQ)", "SPDR Dow Jones (DIA)"])
+        selected_names.extend(sel_equity)
+    with st.sidebar.expander("Leveraged ETFs"):
+        sel_lev = st.multiselect("Leveraged ETFs", CATEGORIES["Leveraged ETFs"])
+        selected_names.extend(sel_lev)
+    with st.sidebar.expander("Crypto"):
+        sel_crypto = st.multiselect("Crypto", CATEGORIES["Crypto"])
+        selected_names.extend(sel_crypto)
+    with st.sidebar.expander("Commodities"):
+        sel_comm = st.multiselect("Commodities ETFs", CATEGORIES["Commodities"], default=["SPDR Gold Trust (GLD)"])
+        selected_names.extend(sel_comm)
+    with st.sidebar.expander("Treasuries"):
+        sel_treas = st.multiselect("Treasuries", CATEGORIES["Treasuries"])
+        selected_names.extend(sel_treas)
+    with st.sidebar.expander("VIX ETFs"):
+        sel_vix = st.multiselect("VIX ETFs", CATEGORIES["VIX ETFs"])
+        selected_names.extend(sel_vix)
+    with st.sidebar.expander("Stocks"):
+        sel_stocks = st.multiselect("Stocks", CATEGORIES["Stocks"])
+        selected_names.extend(sel_stocks)
     selected = [TICKERS[name] for name in selected_names]
     start = st.sidebar.date_input("Start date", value=date(2020, 1, 1))
     end = st.sidebar.date_input("End date", value=date.today())
