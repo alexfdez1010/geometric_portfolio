@@ -179,7 +179,7 @@ def main():
     with st.spinner("Fetching data and running simulation..."):
         try:
             returns = get_returns(
-                tickets=selected,
+                tickers=selected,
                 start_date=start.isoformat(),
                 end_date=end.isoformat()
             )
