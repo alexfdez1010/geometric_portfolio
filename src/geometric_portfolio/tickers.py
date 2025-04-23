@@ -1,3 +1,5 @@
+import yfinance as yf
+
 TICKERS = {
     "S&P 500 (VOO)": "VOO",
     "Nasdaq (QQQ)": "QQQ",
@@ -44,3 +46,24 @@ CATEGORIES = {
     "VIX ETFs": ["S&P 500 VIX Short-term Futures Index (VILX.L)", "iPath S&P 500 VIX (VXX)", "ProShares VIX Short-Term Futures ETF (VIXY)", "ProShares VIX Mid-Term Futures ETF (VIXM)", "ProShares Ultra VIX Short-Term Futures ETF (UVXY)"],
     "Stocks": ["Apple Inc. (AAPL)", "Microsoft Corp. (MSFT)", "Alphabet Inc. (GOOGL)", "Amazon.com Inc. (AMZN)", "NVIDIA Corp. (NVDA)", "Tesla Inc. (TSLA)", "Meta Platforms Inc. (META)", "Berkshire Hathaway (BRK-B)", "Walmart Inc. (WMT)"]
 }
+
+def validate_ticker(ticker: str) -> bool:
+    """
+    Validate ticker via yfinance by attempting to download data.
+    """
+    try:
+        df = yf.download(ticker, period="1d", auto_adjust=True, progress=False)
+        return not df.empty
+    except Exception:
+        return False
+
+def resolve_ticker(name_or_symbol: str) -> str:
+    """
+    Resolve a ticker symbol or friendly name to a valid ticker.
+    """
+    if name_or_symbol in TICKERS:
+        return TICKERS[name_or_symbol]
+    symbol = name_or_symbol.upper().strip()
+    if validate_ticker(symbol):
+        return symbol
+    raise ValueError(f"Ticker {symbol} is invalid or no data found")

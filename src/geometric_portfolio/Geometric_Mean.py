@@ -3,12 +3,12 @@ from datetime import date
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from geometric_portfolio.plot import plot_wealth_evolution, plot_returns_distribution
+from geometric_portfolio.plot import plot_wealth_evolution, plot_returns_distribution, plot_correlation_matrix
 from geometric_portfolio.metrics import wealth, summary
 from geometric_portfolio.data import get_returns
 from geometric_portfolio.solver import PortfolioSolver
 from geometric_portfolio.backtesting import backtesting
-from geometric_portfolio.tickers import TICKERS, CATEGORIES
+from geometric_portfolio.tickers import TICKERS, CATEGORIES, resolve_ticker
 
 def display_weights(criteria: list[tuple[str, dict[str, float]]]):
     """
@@ -124,6 +124,9 @@ def plot_results(returns: pd.DataFrame, criteria: list[tuple[str, dict[str, floa
     st.subheader("Returns Distribution")
     fig2 = plot_returns_distribution(returns_dict)
     st.pyplot(fig2)
+    st.subheader("Correlation Matrix")
+    fig3 = plot_correlation_matrix(returns)
+    st.pyplot(fig3)
 
 def get_inputs() -> tuple[list[str], date, date, float, float, float, float, bool]:
     """
@@ -157,6 +160,14 @@ def get_inputs() -> tuple[list[str], date, date, float, float, float, float, boo
         sel_stocks = st.multiselect("Stocks", CATEGORIES["Stocks"])
         selected_names.extend(sel_stocks)
     selected = [TICKERS[name] for name in selected_names]
+    custom_input = st.sidebar.text_input("Custom Ticker (symbol or name)")
+    if custom_input:
+        try:
+            custom_symbol = resolve_ticker(custom_input)
+            if custom_symbol not in selected:
+                selected.append(custom_symbol)
+        except ValueError as e:
+            st.sidebar.error(str(e))
     start = st.sidebar.date_input("Start date", value=date(2020, 1, 1))
     end = st.sidebar.date_input("End date", value=date.today())
     initial_amount = st.sidebar.number_input("Initial amount", min_value=1000, value=10000, step=100)

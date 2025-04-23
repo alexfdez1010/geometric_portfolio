@@ -4,8 +4,8 @@ from datetime import date
 from geometric_portfolio.Geometric_Mean import show_summary
 from geometric_portfolio.backtesting import backtesting
 from geometric_portfolio.metrics import wealth
-from geometric_portfolio.plot import plot_wealth_evolution, plot_returns_distribution
-from geometric_portfolio.tickers import TICKERS
+from geometric_portfolio.plot import plot_wealth_evolution, plot_returns_distribution, plot_correlation_matrix
+from geometric_portfolio.tickers import TICKERS, resolve_ticker
 from geometric_portfolio.data import get_returns
 
 def main():
@@ -29,6 +29,16 @@ def main():
         total = sum(weights)
         if total > 0:
             weights = [w/total for w in weights]
+
+    # Custom ticker input
+    custom_input = st.sidebar.text_input("Custom Ticker (symbol or name)")
+    if custom_input:
+        try:
+            custom_symbol = resolve_ticker(custom_input)
+            if custom_symbol not in selected:
+                selected.append(custom_symbol)
+        except ValueError as e:
+            st.sidebar.error(str(e))
 
     start = st.sidebar.date_input("Start date", value=date(2020, 1, 1))
     end = st.sidebar.date_input("End date", value=date.today())
@@ -76,6 +86,14 @@ def main():
             }
         )
         st.pyplot(fig_r)
+
+        # Correlation matrix
+        st.subheader("Correlation Matrix")
+        # Combine returns for correlation
+        returns_df = asset_returns.copy()
+        returns_df["Custom Portfolio"] = strategy_returns
+        fig_corr = plot_correlation_matrix(returns_df)
+        st.pyplot(fig_corr)
 
         # Display metrics
         st.subheader("Portfolio Metrics")

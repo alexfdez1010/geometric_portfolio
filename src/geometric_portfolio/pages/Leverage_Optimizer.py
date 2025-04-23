@@ -5,20 +5,28 @@ import pandas as pd
 
 from geometric_portfolio.data import get_returns
 from geometric_portfolio.metrics import volatility, arithmetic_mean, geometric_mean
-from geometric_portfolio.tickers import TICKERS
+from geometric_portfolio.tickers import TICKERS, resolve_ticker
+from geometric_portfolio.plot import plot_correlation_matrix
 
 def main():
     st.set_page_config(page_title="Leverage Optimizer")
     st.title("Leverage Optimizer")
 
-    asset_name = st.selectbox("Select Asset", list(TICKERS.keys()))
+    asset_name = st.sidebar.selectbox("Select Asset", list(TICKERS.keys()))
+    ticker = TICKERS[asset_name]
+    custom_input = st.sidebar.text_input("Custom Ticker (symbol or name)")
+    if custom_input:
+        try:
+            custom_symbol = resolve_ticker(custom_input)
+            ticker = custom_symbol
+        except ValueError as e:
+            st.sidebar.error(str(e))
 
     start = st.date_input("Start date", value=date(2020, 1, 1))
     end = st.date_input("End date", value=date.today())
     run = st.button("Find Optimal Leverage")
 
     if run:
-        ticker = TICKERS[asset_name]
         returns_df = get_returns(tickers=[ticker], start_date=start.isoformat(), end_date=end.isoformat())
         returns = returns_df[ticker]
         
@@ -58,7 +66,10 @@ def main():
             st.line_chart(100 * df.set_index("Leverage")["Volatility"], y_label="Volatility (%)")
         with col3:
             st.line_chart(df.set_index("Leverage")["Alejandro Ratio"], y_label="Alejandro Ratio")
-        
+
+        st.subheader("Correlation Matrix")
+        fig_corr = plot_correlation_matrix(returns_df)
+        st.pyplot(fig_corr)
 
 if __name__ == "__main__":
     main()
