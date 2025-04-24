@@ -14,7 +14,7 @@ def get_returns(tickers: list[str], start_date: str | None = None, end_date: str
     Returns:
         pd.DataFrame: Returns for the given tickers.
     """
-    df = yf.download(tickers, start=start_date, end=end_date, auto_adjust=True, multi_level_index=True, interval="1d")
+    df = yf.download(tickers, start=start_date, end=end_date, auto_adjust=True, multi_level_index=True, interval="1d", progress=False)
 
     if df is None or 'Close' not in df:
         raise ValueError("No data found for the given tickers.")
