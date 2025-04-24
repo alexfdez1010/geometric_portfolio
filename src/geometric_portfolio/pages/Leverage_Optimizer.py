@@ -4,9 +4,8 @@ import numpy as np
 import pandas as pd
 
 from geometric_portfolio.data import get_returns
-from geometric_portfolio.metrics import volatility, arithmetic_mean, geometric_mean
+from geometric_portfolio.metrics import volatility, geometric_mean
 from geometric_portfolio.tickers import TICKERS, resolve_ticker
-from geometric_portfolio.plot import plot_correlation_matrix
 
 def main():
     st.set_page_config(page_title="Leverage Optimizer")
@@ -30,21 +29,17 @@ def main():
         returns_df = get_returns(tickers=[ticker], start_date=start.isoformat(), end_date=end.isoformat())
         returns = returns_df[ticker]
         
-        arithmetic_mean_asset = arithmetic_mean(returns)
-        if arithmetic_mean_asset <= 0:
-            st.warning("The selected asset does not have a positive arithmetic mean, so it is not possible to find an optimal leverage.")
-            return
-        
         leverages, geometric_means, volatilities, alejandro_ratios = [], [], [], []
         
-        for leverage in np.linspace(0.01, 20, 1000):
+        for leverage in np.linspace(-10, 10, 1000):
+
             leveraged_returns = leverage * returns
             # Avoid negative returns exceeding -100%
             leveraged_returns = leveraged_returns.clip(lower=-1.0)
             geometric_mean_leveraged = geometric_mean(leveraged_returns)
-            
+
             if geometric_mean_leveraged < 0:
-                break
+                continue
 
             volatility_leveraged = volatility(leveraged_returns)
             
@@ -66,10 +61,6 @@ def main():
             st.line_chart(100 * df.set_index("Leverage")["Volatility"], y_label="Volatility (%)")
         with col3:
             st.line_chart(df.set_index("Leverage")["Alejandro Ratio"], y_label="Alejandro Ratio")
-
-        st.subheader("Correlation Matrix")
-        fig_corr = plot_correlation_matrix(returns_df)
-        st.pyplot(fig_corr)
 
 if __name__ == "__main__":
     main()
