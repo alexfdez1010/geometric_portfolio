@@ -3,7 +3,7 @@ from datetime import date
 
 from geometric_portfolio.data import get_returns
 from geometric_portfolio.tickers import TICKERS, resolve_ticker
-from geometric_portfolio.st_shred import show_leverage
+from geometric_portfolio.st_shared import show_leverage
 
 def main():
     st.set_page_config(page_title="Leverage Optimizer")
