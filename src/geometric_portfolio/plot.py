@@ -58,11 +58,15 @@ def plot_returns_distribution(returns_dict: dict[str, pd.Series], bins=50, alpha
     plt.tight_layout()
     return fig
 
-# New: plot correlation matrix
-
 def plot_correlation_matrix(returns_df: pd.DataFrame) -> plt.Figure:
     """
     Plot correlation matrix of asset returns.
+
+    Args:
+        returns_df: pd.DataFrame of asset returns.
+
+    Returns:
+        Matplotlib figure.
     """
     corr = returns_df.corr()
     fig, ax = plt.subplots(figsize=(len(corr.columns)*0.5+4, len(corr.index)*0.5+4))

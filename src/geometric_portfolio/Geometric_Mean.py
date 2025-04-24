@@ -9,6 +9,7 @@ from geometric_portfolio.data import get_returns
 from geometric_portfolio.solver import PortfolioSolver
 from geometric_portfolio.backtesting import backtesting
 from geometric_portfolio.tickers import TICKERS, CATEGORIES, resolve_ticker
+from geometric_portfolio.st_shared import show_leverage
 
 def display_weights(criteria: list[tuple[str, dict[str, float]]]):
     """
@@ -128,12 +129,12 @@ def plot_results(returns: pd.DataFrame, criteria: list[tuple[str, dict[str, floa
     fig3 = plot_correlation_matrix(returns)
     st.pyplot(fig3)
 
-def get_inputs() -> tuple[list[str], date, date, float, float, float, float, bool]:
+def get_inputs() -> tuple[list[str], date, date, float, float, float, float, float, bool]:
     """
     Get user inputs from the sidebar.
 
     Returns:
-        tuple of selected tickers, start date, end date, initial amount, acceptable difference, fixed cost, variable cost, run button.
+        tuple of selected tickers, start date, end date, initial amount, acceptable difference, fixed cost, variable cost, cash interest rate, run button.
     """
     st.sidebar.header("Inputs")
     # Grouped asset selection by category
@@ -216,6 +217,20 @@ def main():
     )
     show_summary(asset_returns)
     plot_results(returns, criteria, solver)
+
+    st.subheader("Leverage Recommendation")
+
+    keys = [
+        "Highest Geometric Mean",
+        "Lowest Volatility",
+        "Highest Alejandro Ratio"
+    ]
+
+    for key in keys:
+        returns = asset_returns[key]
+        show_leverage(returns, title=key, minimum_leverage=0.0, maximum_leverage=10.0)
+    
+    
 
 if __name__ == "__main__":
     main()
