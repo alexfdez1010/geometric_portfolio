@@ -40,8 +40,6 @@ def main():
         total = sum(weights.values())
         if total > 0:
             weights = {ticker: w/total for ticker, w in weights.items()}
-    
-    print(weights)
 
     start = st.sidebar.date_input("Start date", value=date(2020, 1, 1))
     end = st.sidebar.date_input("End date", value=date.today())
