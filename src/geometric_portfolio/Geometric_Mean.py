@@ -150,9 +150,6 @@ def get_inputs() -> tuple[list[str], date, date, float, float, float, float, boo
     with st.sidebar.expander("Commodities"):
         sel_comm = st.multiselect("Commodities ETFs", CATEGORIES["Commodities"], default=["SPDR Gold Trust (GLD)"])
         selected_names.extend(sel_comm)
-    with st.sidebar.expander("Treasuries"):
-        sel_treas = st.multiselect("Treasuries", CATEGORIES["Treasuries"])
-        selected_names.extend(sel_treas)
     with st.sidebar.expander("VIX ETFs"):
         sel_vix = st.multiselect("VIX ETFs", CATEGORIES["VIX ETFs"])
         selected_names.extend(sel_vix)
