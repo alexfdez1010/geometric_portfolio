@@ -30,14 +30,14 @@ TICKERS = {
     "ProShares Ultra S&P500 (SSO)": "SSO",
     "ProShares UltraPro QQQ (TQQQ)": "TQQQ",
     "ProShares Ultra Gold (UGL)": "UGL",
-    "WisdomTree Gold 3x Daily Leveraged (3GOL.L)": "3GOL.L",
-    "Direxion Daily Gold Miners Bull 2X Shares (NUGT)": "NUGT",
-    "ProShares Ultra Silver (AGQ)": "AGQ",
+    "WisdomTree NASDAQ-100 3x Daily Leveraged (3QQQ.L)": "3QQQ.L",
+    "WisdomTree S&P 500 3x Daily Leveraged (3SPY.L)": "3SPY.L",
+    "WisdomTree Gold 3x Daily Leveraged (3GOL.L)": "3GOL.L"
 }
 
 CATEGORIES = {
     "Equity ETFs": ["S&P 500 (VOO)", "Nasdaq (QQQ)", "SPDR Dow Jones (DIA)", "Invesco S&P 500 Equal Weight ETF (RSP)", "First Trust NASDAQ-100 Equal Weighted Index Fund (QQEW)", "Invesco S&P SmallCap 600 Equal Weight ETF (EWSC)", "Invesco S&P MidCap 400 Equal Weight ETF (EWMC)"],
-    "Leveraged ETFs": ["ProShares Ultra S&P500 (SSO)", "ProShares UltraPro QQQ (TQQQ)", "ProShares Ultra Gold (UGL)", "WisdomTree Gold 3x Daily Leveraged (3GOL.L)", "Direxion Daily Gold Miners Bull 2X Shares (NUGT)", "ProShares Ultra Silver (AGQ)"],
+    "Leveraged ETFs": ["WisdomTree Gold 3x Daily Leveraged (3GOL.L)", "WisdomTree NASDAQ-100 3x Daily Leveraged (3QQQ.L)", "WisdomTree S&P 500 3x Daily Leveraged (3SPY.L)"],
     "Crypto": ["Bitcoin (BTC-USD)", "Ethereum (ETH-USD)"],
     "Commodities": ["SPDR Gold Trust (GLD)", "iShares Silver Trust (SLV)", "United States Oil (USO)"],
     "VIX ETFs": ["S&P 500 VIX Short-term Futures Index (VILX.L)", "iPath S&P 500 VIX (VXX)", "ProShares VIX Short-Term Futures ETF (VIXY)", "ProShares VIX Mid-Term Futures ETF (VIXM)", "ProShares Ultra VIX Short-Term Futures ETF (UVXY)"],

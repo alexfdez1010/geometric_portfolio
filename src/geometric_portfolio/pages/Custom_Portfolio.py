@@ -16,19 +16,6 @@ def main():
     st.sidebar.header("Custom Portfolio Inputs")
     selected_names = st.sidebar.multiselect("Select Assets", list(TICKERS.keys()), default=list(TICKERS.keys())[:3])
     selected = [TICKERS[name] for name in selected_names]
-    # Weight assignment
-    weights = []
-    if selected:
-        st.sidebar.subheader("Assign Weights")
-        for name in selected_names:
-            w = st.sidebar.number_input(
-                f"Weight for {name}", min_value=0.0, max_value=1.0,
-                value=round(1.0/len(selected_names), 2), step=0.01, format="%.2f"
-            )
-            weights.append(w)
-        total = sum(weights)
-        if total > 0:
-            weights = [w/total for w in weights]
 
     # Custom ticker input
     custom_input = st.sidebar.text_input("Custom Ticker (symbol or name)")
@@ -40,6 +27,22 @@ def main():
         except ValueError as e:
             st.sidebar.error(str(e))
 
+    # Weight assignment
+    weights = {}
+    if selected:
+        st.sidebar.subheader("Assign Weights")
+        for ticker in selected:
+            w = st.sidebar.number_input(
+                f"Weight for {ticker}", min_value=0.0, max_value=1.0,
+                value=round(1.0/len(selected), 2), step=0.01, format="%.2f"
+            )
+            weights[ticker] = w
+        total = sum(weights.values())
+        if total > 0:
+            weights = {ticker: w/total for ticker, w in weights.items()}
+    
+    print(weights)
+
     start = st.sidebar.date_input("Start date", value=date(2020, 1, 1))
     end = st.sidebar.date_input("End date", value=date.today())
     initial_amount = st.sidebar.number_input("Initial amount", min_value=1000.0, value=10000.0, step=100.0)
@@ -49,10 +52,11 @@ def main():
     run = st.sidebar.button("Run Backtest")
 
     if not run:
-        st.stop()
+        return
+    
     if not selected:
         st.warning("Please select at least one asset.")
-        st.stop()
+        return
 
     with st.spinner("Running backtest..."):
         asset_returns = get_returns(tickers=selected, start_date=start.isoformat(), end_date=end.isoformat())

@@ -6,7 +6,7 @@ import yfinance as yf
 def backtesting(
     initial_amount: float,
     tickers: list[str],
-    weights: list[float],
+    weights: dict[str, float],
     start_date: str | pd.Timestamp,
     end_date: str | pd.Timestamp,
     acceptable_diff: float,
@@ -32,13 +32,11 @@ def backtesting(
         - weight_history: pd.DataFrame of daily weights held for each asset.
     """
     # Validate inputs
-    if len(tickers) != len(weights):
-        raise ValueError("Length of tickers and weights must match")
+    if not all(ticker in weights for ticker in tickers):
+        raise ValueError("All tickers must have corresponding weights")
     
-    # Normalize weights if they don't sum to 1
-    weights = np.array(weights, dtype=float)
-    if not np.isclose(weights.sum(), 1.0):
-        weights = weights / weights.sum()
+    if abs(sum(weights.values()) - 1.0) > 1e-6:
+        raise ValueError("Weights must sum to 1.0")
 
     # Download data
     raw_data = yf.download(tickers, start=start_date, end=end_date, progress=False)
@@ -58,8 +56,9 @@ def backtesting(
     
     # Initialize portfolio
     portfolio_value = initial_amount
+    weight_array = np.array([weights.get(ticker, 0.0) for ticker in tickers])
     prices0 = close.iloc[0].values
-    shares = (weights * portfolio_value) / prices0
+    shares = (weight_array * portfolio_value) / prices0
 
     weight_history = []
     returns = []
@@ -78,12 +77,12 @@ def backtesting(
         
         # Current weights
         curr_weights = shares * price_close / curr_value
-        weight_history.append(curr_weights.tolist())
+        weight_history.append(dict(zip(tickers, curr_weights)))
         
         # Check for rebalancing
-        if np.any(np.abs(curr_weights - weights) > acceptable_diff):
+        if np.any(np.abs(curr_weights - weight_array) > acceptable_diff):
             # Calculate target shares
-            target_vals = weights * curr_value
+            target_vals = weight_array * curr_value
             trade_vals = target_vals - shares * price_close
             
             # Compute transaction costs
@@ -106,6 +105,6 @@ def backtesting(
     
     # Create return series starting from second date
     portfolio_returns = pd.Series(returns, index=dates[1:] if len(dates) > 1 else dates)
-    weight_history = pd.DataFrame(weight_history, index=dates, columns=tickers)
+    weight_df = pd.DataFrame(weight_history, index=dates)
 
-    return portfolio_returns, weight_history
+    return portfolio_returns, weight_df

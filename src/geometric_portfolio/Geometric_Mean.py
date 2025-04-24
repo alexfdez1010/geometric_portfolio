@@ -60,7 +60,7 @@ def compute_asset_returns(
             asset_returns[title] = backtesting(
                 initial_amount=initial_amount,
                 tickers=list(weights.keys()),
-                weights=list(weights.values()),
+                weights=weights,
                 start_date=start.isoformat(),
                 end_date=end.isoformat(),
                 acceptable_diff=acceptable_diff,
