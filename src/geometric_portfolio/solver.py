@@ -3,23 +3,23 @@ import numpy as np
 from scipy.optimize import minimize
 import matplotlib.pyplot as plt
 
-from geometric_portfolio.metrics import geometric_mean, volatility, alejandro_ratio
+from geometric_portfolio.metrics import geometric_mean, alejandro_ratio, max_drawdown
 
 
 class PortfolioSolver:
     """
     Numerical optimization solver for portfolio weights maximizing geometric mean,
-    minimizing volatility, and maximizing Alejandro ratio.
+    minimizing max drawdown, and maximizing Alejandro ratio.
     """
     returns: pd.DataFrame
     best_weights_geometric: dict[str, float] | None
-    best_weights_volatility: dict[str, float] | None
+    best_weights_max_drawdown: dict[str, float] | None
     best_weights_alejandro: dict[str, float] | None
 
     def __init__(self, returns: pd.DataFrame):
         self.returns = returns
         self.best_weights_geometric = None
-        self.best_weights_volatility = None
+        self.best_weights_max_drawdown = None
         self.best_weights_alejandro = None
 
     def compute_returns(self, weights: dict[str, float]) -> pd.Series:
@@ -55,37 +55,39 @@ class PortfolioSolver:
             ret = self.compute_returns(dict(zip(assets, x)))
             return -geometric_mean(ret)
 
-        def obj_vol(x):
+        def obj_max_drawdown(x):
             ret = self.compute_returns(dict(zip(assets, x)))
-            return volatility(ret)
+            return max_drawdown(ret)
 
         def obj_alejandro(x):
             ret = self.compute_returns(dict(zip(assets, x)))
             return -alejandro_ratio(ret)
 
         sol_g = minimize(obj_geom, x0, method='SLSQP', bounds=bounds, constraints=constraints)
-        sol_v = minimize(obj_vol, x0, method='SLSQP', bounds=bounds, constraints=constraints)
+        sol_v = minimize(obj_max_drawdown, x0, method='SLSQP', bounds=bounds, constraints=constraints)
         sol_a = minimize(obj_alejandro, x0, method='SLSQP', bounds=bounds, constraints=constraints)
 
         self.best_weights_geometric = dict(zip(assets, sol_g.x))
-        self.best_weights_volatility = dict(zip(assets, sol_v.x))
+        self.best_weights_max_drawdown = dict(zip(assets, sol_v.x))
         self.best_weights_alejandro = dict(zip(assets, sol_a.x))
 
-        return self.best_weights_geometric, self.best_weights_volatility, self.best_weights_alejandro
+        return self.best_weights_geometric, self.best_weights_max_drawdown, self.best_weights_alejandro
     
-    def plot_geometric_volatility_means(self) -> None:
+    def plot_geometric_max_drawdown(self) -> None:
         """
-        Plot the best geometric mean, lowest volatility and highest Alejandro ratio portfolios
-        and the assets returns in a geometric volatility space.
+        Plot the best geometric mean and lowest max drawdown portfolios
+        and the assets returns in a geometric max drawdown space.
         """
+        if self.best_weights_geometric is None or self.best_weights_max_drawdown is None or self.best_weights_alejandro is None:
+            raise ValueError("Best weights must be computed first, use run() method.")
         
-        # Compute best geometric mean and lowest volatility portfolios
+        # Compute best geometric mean and lowest max drawdown portfolios
         best_geometric = self.best_weights_geometric
-        best_volatility = self.best_weights_volatility
+        best_max_drawdown = self.best_weights_max_drawdown
         best_alejandro = self.best_weights_alejandro
 
         returns_geometric = self.compute_returns(best_geometric)
-        returns_volatility = self.compute_returns(best_volatility)
+        returns_max_drawdown = self.compute_returns(best_max_drawdown)
         returns_alejandro = self.compute_returns(best_alejandro)
 
         # Plot assets returns
@@ -93,20 +95,20 @@ class PortfolioSolver:
         for asset in self.returns.columns:
             returns = self.compute_returns({asset: 1.0})
             plt.scatter(
-                volatility(returns) * 100,
+                max_drawdown(returns) * 100,
                 geometric_mean(returns) * 100,
                 marker='o',
                 s=100,
                 alpha=0.5,
                 label=asset
             )
-        volatility_geometric, geometric_mean_geometric = volatility(returns_geometric) * 100, geometric_mean(returns_geometric) * 100
-        volatility_volatility, geometric_mean_volatility = volatility(returns_volatility) * 100, geometric_mean(returns_volatility) * 100
-        volatility_alejandro, geometric_mean_alejandro = volatility(returns_alejandro) * 100, geometric_mean(returns_alejandro) * 100
+        max_drawdown_geometric, geometric_mean_geometric = max_drawdown(returns_geometric) * 100, geometric_mean(returns_geometric) * 100
+        max_drawdown_max_drawdown, geometric_mean_max_drawdown = max_drawdown(returns_max_drawdown) * 100, geometric_mean(returns_max_drawdown) * 100
+        max_drawdown_alejandro, geometric_mean_alejandro = max_drawdown(returns_alejandro) * 100, geometric_mean(returns_alejandro) * 100
 
-        # Create scatter plot of volatility vs geometric mean
+        # Create scatter plot of max drawdown vs geometric mean
         plt.scatter(
-            volatility_geometric,
+            max_drawdown_geometric,
             geometric_mean_geometric,
             marker='*',
             s=300,
@@ -114,15 +116,15 @@ class PortfolioSolver:
             label='Best Geometric Mean'
         )
         plt.scatter(
-            volatility_volatility,
-            geometric_mean_volatility,
+            max_drawdown_max_drawdown,
+            geometric_mean_max_drawdown,
             marker='d',
             s=200,
             color='blue',
-            label='Lowest Volatility'
+            label='Lowest Max Drawdown'
         )
         plt.scatter(
-            volatility_alejandro,
+            max_drawdown_alejandro,
             geometric_mean_alejandro,
             marker='s',
             s=200,
@@ -130,9 +132,9 @@ class PortfolioSolver:
             label='Highest Alejandro Ratio'
         )
 
-        plt.xlabel('Volatility (%)')
+        plt.xlabel('Max Drawdown (%)')
         plt.ylabel('Geometric Mean Return (%)')
-        plt.title('Portfolio Optimization: Geometric Mean vs Volatility')
+        plt.title('Portfolio Optimization: Geometric Mean vs Max Drawdown')
         plt.grid(True)
         plt.legend(loc='best')
         plt.tight_layout()

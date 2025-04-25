@@ -1,5 +1,4 @@
 import pandas as pd
-import numpy as np
 import yfinance as yf
 
 
@@ -56,46 +55,40 @@ def backtesting(
     
     # Initialize portfolio
     portfolio_value = initial_amount
-    weight_array = np.array([weights.get(ticker, 0.0) for ticker in tickers])
-    prices0 = close.iloc[0].values
-    shares = (weight_array * portfolio_value) / prices0
+    # Initialize target weight dict and per-ticker shares dict
+    weight_dict = {t: weights.get(t, 0.0) for t in tickers}
+    init_prices = close.iloc[0]
+    shares = {t: weight_dict[t] * portfolio_value / init_prices[t] for t in tickers}
 
     weight_history = []
     returns = []
     prev_value = portfolio_value
 
     for i, date in enumerate(dates):
-        price_close = close.loc[date].values
+        price_close = close.loc[date]  # Series indexed by ticker
         
-        # Update portfolio value at close
-        curr_value = np.dot(shares, price_close)
+        # Compute portfolio value by summing share*price
+        curr_value = sum(shares[t] * price_close[t] for t in tickers)
         
-        # Calculate daily return (skip first day)
         if i > 0:
-            daily_ret = curr_value / prev_value - 1
-            returns.append(daily_ret)
+            returns.append(curr_value / prev_value - 1)
         
-        # Current weights
-        curr_weights = shares * price_close / curr_value
-        weight_history.append(dict(zip(tickers, curr_weights)))
+        # Current weights per ticker
+        curr_weights = {t: shares[t] * price_close[t] / curr_value for t in tickers}
+        weight_history.append(curr_weights.copy())
         
-        # Check for rebalancing
-        if np.any(np.abs(curr_weights - weight_array) > acceptable_diff):
-            # Calculate target shares
-            target_vals = weight_array * curr_value
-            trade_vals = target_vals - shares * price_close
-            
-            # Compute transaction costs
-            costs = np.zeros_like(trade_vals)
-            non_zero_trades = trade_vals != 0
-            costs[non_zero_trades] = fixed_cost + variable_cost * np.abs(trade_vals[non_zero_trades])
-            total_cost = costs.sum()
-            
+        # Rebalance if any weight deviates beyond threshold
+        if any(abs(curr_weights[t] - weight_dict[t]) > acceptable_diff for t in tickers):
+            # Compute trade values and costs
+            trade_vals = {t: weight_dict[t] * curr_value - shares[t] * price_close[t] for t in tickers}
+            total_cost = sum((fixed_cost + variable_cost * abs(trade_vals[t])) for t in tickers if trade_vals[t] != 0)
             # Execute trades
-            shares = shares + trade_vals / price_close
-            
-            # Deduct costs from portfolio value
+            for t in tickers:
+                if trade_vals[t] != 0:
+                    shares[t] += trade_vals[t] / price_close[t]
             curr_value -= total_cost
+            # Update target weights to actual post-trade
+            weight_dict = {t: shares[t] * price_close[t] / curr_value for t in tickers}
         
         prev_value = curr_value
 

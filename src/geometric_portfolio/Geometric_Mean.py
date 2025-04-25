@@ -23,7 +23,8 @@ def display_weights(criteria: list[tuple[str, dict[str, float]]]):
     for col, (title, weights) in zip(cols, criteria):
         with col:
             st.write(title)
-            dfw = pd.DataFrame.from_dict(weights, orient="index", columns=["Weight"])
+            dfw = pd.DataFrame.from_dict(weights, orient="index")
+            dfw.columns = ["Weight"]
             dfw = dfw[dfw["Weight"] > 0.01]
             dfw["Weight"] = dfw["Weight"].apply(lambda x: f"{x*100:.2f}%")
             st.table(dfw)
@@ -37,7 +38,7 @@ def compute_asset_returns(
     variable_cost: float,
     start: date,
     end: date
-) -> dict[str, pd.Series]:
+) -> dict[str, pd.Series | None]:
     """
     Compute returns for each asset and portfolio.
 
@@ -52,7 +53,7 @@ def compute_asset_returns(
         end: Backtest end date.
 
     Returns:
-        dict[str, pd.Series] of returns for each asset and portfolio.
+        dict[str, pd.Series | None] of returns for each asset and portfolio.
     """
     asset_returns = {asset: returns[asset] for asset in returns.columns}
     for title, weights in criteria:
@@ -69,14 +70,15 @@ def compute_asset_returns(
             )[0]
         except Exception:
             asset_returns[title] = None
+    
     return asset_returns
 
-def show_summary(asset_returns: dict[str, pd.Series]):
+def show_summary(asset_returns: dict[str, pd.Series | None]):
     """
     Display summary statistics for each portfolio.
 
     Args:
-        asset_returns: dict[str, pd.Series] of returns for each asset and portfolio.
+        asset_returns: dict[str, pd.Series | None] of returns for each asset and portfolio.
     """
     rows = []
     for title, ret in asset_returns.items():
@@ -104,8 +106,8 @@ def plot_results(returns: pd.DataFrame, criteria: list[tuple[str, dict[str, floa
         criteria: List of tuples (title, weights) where weights is a dict of asset weights.
         solver: PortfolioSolver instance.
     """
-    st.subheader("Geometric vs Volatility")
-    solver.plot_geometric_volatility_means()
+    st.subheader("Geometric vs Max Drawdown")
+    solver.plot_geometric_max_drawdown()
     st.pyplot(plt.gcf())
     # Compute returns for each portfolio
     returns_dict = {asset: returns[asset] for asset in returns.columns}
@@ -140,7 +142,7 @@ def get_inputs() -> tuple[list[str], date, date, float, float, float, float, flo
     # Grouped asset selection by category
     selected_names: list[str] = []
     with st.sidebar.expander("Equity ETFs", expanded=True):
-        sel_equity = st.multiselect("Equity ETFs", CATEGORIES["Equity ETFs"], default=["S&P 500 (VOO)", "Nasdaq (QQQ)", "SPDR Dow Jones (DIA)"])
+        sel_equity = st.multiselect("Equity ETFs", CATEGORIES["Equity ETFs"])
         selected_names.extend(sel_equity)
     with st.sidebar.expander("Leveraged ETFs"):
         sel_lev = st.multiselect("Leveraged ETFs", CATEGORIES["Leveraged ETFs"])
@@ -149,7 +151,7 @@ def get_inputs() -> tuple[list[str], date, date, float, float, float, float, flo
         sel_crypto = st.multiselect("Crypto", CATEGORIES["Crypto"])
         selected_names.extend(sel_crypto)
     with st.sidebar.expander("Commodities"):
-        sel_comm = st.multiselect("Commodities ETFs", CATEGORIES["Commodities"], default=["SPDR Gold Trust (GLD)"])
+        sel_comm = st.multiselect("Commodities ETFs", CATEGORIES["Commodities"])
         selected_names.extend(sel_comm)
     with st.sidebar.expander("VIX ETFs"):
         sel_vix = st.multiselect("VIX ETFs", CATEGORIES["VIX ETFs"])
@@ -193,14 +195,14 @@ def main():
                 end_date=end.isoformat()
             )
             solver = PortfolioSolver(returns)
-            best_weights_geometric, best_weights_volatility, best_weights_alejandro = solver.run()
+            best_weights_geometric, best_weights_max_drawdown, best_weights_alejandro = solver.run()
         except Exception as e:
             st.error(f"Error in optimization: {e}")
             return
 
     criteria = [
         ("Highest Geometric Mean", best_weights_geometric),
-        ("Lowest Volatility", best_weights_volatility),
+        ("Lowest Max Drawdown", best_weights_max_drawdown),
         ("Highest Alejandro Ratio", best_weights_alejandro)
     ]
     display_weights(criteria)
@@ -222,7 +224,7 @@ def main():
 
     keys = [
         "Highest Geometric Mean",
-        "Lowest Volatility",
+        "Lowest Max Drawdown",
         "Highest Alejandro Ratio"
     ]
 

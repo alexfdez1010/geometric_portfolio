@@ -14,7 +14,7 @@ def main():
 
     # Sidebar inputs
     st.sidebar.header("Custom Portfolio Inputs")
-    selected_names = st.sidebar.multiselect("Select Assets", list(TICKERS.keys()), default=list(TICKERS.keys())[:3])
+    selected_names = st.sidebar.multiselect("Select Assets", list(TICKERS.keys()))
     selected = [TICKERS[name] for name in selected_names]
 
     # Custom ticker input
@@ -58,6 +58,7 @@ def main():
 
     with st.spinner("Running backtest..."):
         asset_returns = get_returns(tickers=selected, start_date=start.isoformat(), end_date=end.isoformat())
+        
         strategy_returns, _ = backtesting(
             initial_amount=initial_amount,
             tickers=selected,
@@ -72,21 +73,17 @@ def main():
         wealth_strategy = wealth(strategy_returns)
 
         st.subheader("Wealth Evolution")
-        fig_w = plot_wealth_evolution(
-            {
-                "Custom Portfolio": wealth_strategy,
-                **{asset: wealth(asset_returns[asset]) for asset in asset_returns.columns}
-            }
-        )
+        all_returns = {asset: wealth(asset_returns[asset]) for asset in asset_returns.columns}
+        all_returns["Custom Portfolio"] = wealth_strategy
+        
+        fig_w = plot_wealth_evolution(all_returns)
         st.pyplot(fig_w)
 
         st.subheader("Returns Distribution")
-        fig_r = plot_returns_distribution(
-            {
-                "Custom Portfolio": strategy_returns,
-                **{asset: asset_returns[asset] for asset in asset_returns.columns}
-            }
-        )
+        returns = {asset: asset_returns[asset] for asset in asset_returns.columns}
+        returns["Custom Portfolio"] = strategy_returns
+        
+        fig_r = plot_returns_distribution(returns)
         st.pyplot(fig_r)
 
         # Correlation matrix

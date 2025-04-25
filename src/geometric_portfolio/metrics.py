@@ -64,21 +64,25 @@ def sharpe_ratio(returns: pd.Series, risk_free_rate: float = 0.0, periods_per_ye
     return (arithmetic_mean(returns, periods_per_year) - risk_free_rate) / vol
 
 
-def alejandro_ratio(returns: pd.Series, periods_per_year: int = 252) -> float:
+def alejandro_ratio(returns: pd.Series, risk_preference: float = 1.0) -> float:
     """
-    Calculate the annualized Alejandro ratio of returns (geometric mean / volatility)
+    Calculate the Alejandro ratio of returns (geometric mean / max drawdown ^ risk_preference). This
+    ratio wants to maximize the geometric mean while minimizing the max drawdown. Depeding of the
+    risk preference, the ratio will be more or less sensitive to the max drawdown. Higher
+    risk preference will make the ratio more sensitive to the max drawdown. If risk preference is 0,
+    the ratio will be equal to the geometric mean.
 
     Args:
         returns: Series of daily returns.
-        periods_per_year: Trading periods per year (default is 252).
+        risk_preference: Risk preference parameter (higher implies less risk, if 0 equals to maximize the geometric mean).
 
     Returns:
         float: Annualized Alejandro ratio.
     """
-    vol = volatility(returns, periods_per_year)
-    if np.isclose(vol, 0):
+    max_drawdown_value = max_drawdown(returns)
+    if np.isclose(max_drawdown_value, 0):
         return np.nan
-    return geometric_mean(returns, periods_per_year) / vol
+    return geometric_mean(returns) / (max_drawdown_value ** risk_preference)
 
 
 def max_drawdown(returns: pd.Series) -> float:
@@ -94,7 +98,7 @@ def max_drawdown(returns: pd.Series) -> float:
     wealth = (1 + returns).cumprod()
     peak = wealth.cummax()
     drawdown = wealth / peak - 1
-    return drawdown.min()
+    return -drawdown.min()
 
 
 def best_day(returns: pd.Series) -> float:
@@ -166,15 +170,15 @@ def summary(returns: pd.Series, risk_free_rate: float = 0.0, periods_per_year: i
     """
     metrics = {
         'Geometric Mean': geometric_mean(returns),
-        'Volatility': volatility(returns),
-        'Alejandro Ratio': alejandro_ratio(returns),
-        'Sharpe Ratio': sharpe_ratio(returns, risk_free_rate, periods_per_year),
-        'Arithmetic Mean': arithmetic_mean(returns),
         'Max Drawdown': max_drawdown(returns),
+        'Alejandro Ratio': alejandro_ratio(returns),
+        'Volatility': volatility(returns),
+        'Sharpe Ratio': sharpe_ratio(returns, risk_free_rate, periods_per_year),
         'Best Day': best_day(returns),
         'Worst Day': worst_day(returns),
         'Best Year': best_year(returns),
         'Worst Year': worst_year(returns),
+        'Arithmetic Mean': arithmetic_mean(returns),
     }
     summary_series = pd.Series(metrics)
     return summary_series
