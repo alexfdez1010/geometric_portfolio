@@ -46,7 +46,9 @@ def volatility(returns: pd.Series, periods_per_year: int = 252) -> float:
     return cast(float, returns.std(ddof=1) * np.sqrt(periods_per_year))
 
 
-def sharpe_ratio(returns: pd.Series, risk_free_rate: float = 0.0, periods_per_year: int = 252) -> float:
+def sharpe_ratio(
+    returns: pd.Series, risk_free_rate: float = 0.0, periods_per_year: int = 252
+) -> float:
     """
     Calculate the annualized Sharpe ratio of returns.
 
@@ -82,7 +84,7 @@ def calmar_ratio(returns: pd.Series, risk_preference: float = 1.0) -> float:
     max_drawdown_value = max_drawdown(returns)
     if np.isclose(max_drawdown_value, 0):
         return np.nan
-    return geometric_mean(returns) / (max_drawdown_value ** risk_preference)
+    return geometric_mean(returns) / (max_drawdown_value**risk_preference)
 
 
 def max_drawdown(returns: pd.Series) -> float:
@@ -113,6 +115,7 @@ def best_day(returns: pd.Series) -> float:
     """
     date = returns.idxmax()
     return float(returns.loc[date])
+
 
 def worst_day(returns: pd.Series) -> float:
     """
@@ -156,7 +159,9 @@ def worst_year(returns: pd.Series) -> float:
     return float(yearly.min())
 
 
-def summary(returns: pd.Series, risk_free_rate: float = 0.0, periods_per_year: int = 252) -> pd.Series:
+def summary(
+    returns: pd.Series, risk_free_rate: float = 0.0, periods_per_year: int = 252
+) -> pd.Series:
     """
     Compute and display common portfolio metrics.
 
@@ -169,19 +174,20 @@ def summary(returns: pd.Series, risk_free_rate: float = 0.0, periods_per_year: i
         pd.Series: Series of computed metrics.
     """
     metrics = {
-        'Geometric Mean': geometric_mean(returns),
-        'Max Drawdown': max_drawdown(returns),
-        'Calmar Ratio': calmar_ratio(returns),
-        'Volatility': volatility(returns),
-        'Sharpe Ratio': sharpe_ratio(returns, risk_free_rate, periods_per_year),
-        'Best Day': best_day(returns),
-        'Worst Day': worst_day(returns),
-        'Best Year': best_year(returns),
-        'Worst Year': worst_year(returns),
-        'Arithmetic Mean': arithmetic_mean(returns),
+        "Geometric Mean": geometric_mean(returns),
+        "Max Drawdown": max_drawdown(returns),
+        "Calmar Ratio": calmar_ratio(returns),
+        "Volatility": volatility(returns),
+        "Sharpe Ratio": sharpe_ratio(returns, risk_free_rate, periods_per_year),
+        "Best Day": best_day(returns),
+        "Worst Day": worst_day(returns),
+        "Best Year": best_year(returns),
+        "Worst Year": worst_year(returns),
+        "Arithmetic Mean": arithmetic_mean(returns),
     }
     summary_series = pd.Series(metrics)
     return summary_series
+
 
 def wealth(returns: pd.Series, initial_wealth: float = 1.0) -> pd.Series:
     """

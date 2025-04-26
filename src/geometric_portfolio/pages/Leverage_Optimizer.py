@@ -5,6 +5,7 @@ from geometric_portfolio.data import get_returns
 from geometric_portfolio.tickers import TICKERS, resolve_ticker
 from geometric_portfolio.st_shared import show_leverage
 
+
 def main():
     st.set_page_config(page_title="Leverage Optimizer")
     st.title("Leverage Optimizer")
@@ -24,10 +25,13 @@ def main():
     run = st.button("Find Optimal Leverage")
 
     if run:
-        returns_df = get_returns(tickers=[ticker], start_date=start.isoformat(), end_date=end.isoformat())
+        returns_df = get_returns(
+            tickers=[ticker], start_date=start.isoformat(), end_date=end.isoformat()
+        )
         returns = returns_df[ticker]
-        
+
         show_leverage(returns, title="Leverage Optimizer")
+
 
 if __name__ == "__main__":
     main()

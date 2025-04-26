@@ -3,13 +3,18 @@ from datetime import date
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from geometric_portfolio.plot import plot_wealth_evolution, plot_returns_distribution, plot_correlation_matrix
+from geometric_portfolio.plot import (
+    plot_wealth_evolution,
+    plot_returns_distribution,
+    plot_correlation_matrix,
+)
 from geometric_portfolio.metrics import wealth, summary
 from geometric_portfolio.data import get_returns
 from geometric_portfolio.solver import PortfolioSolver
 from geometric_portfolio.backtesting import backtesting
 from geometric_portfolio.tickers import TICKERS, CATEGORIES, resolve_ticker
 from geometric_portfolio.st_shared import show_leverage
+
 
 def display_weights(criteria: list[tuple[str, dict[str, float]]]):
     """
@@ -26,8 +31,9 @@ def display_weights(criteria: list[tuple[str, dict[str, float]]]):
             dfw = pd.DataFrame.from_dict(weights, orient="index")
             dfw.columns = ["Weight"]
             dfw = dfw[dfw["Weight"] > 0.01]
-            dfw["Weight"] = dfw["Weight"].apply(lambda x: f"{x*100:.2f}%")
+            dfw["Weight"] = dfw["Weight"].apply(lambda x: f"{x * 100:.2f}%")
             st.table(dfw)
+
 
 def compute_asset_returns(
     returns: pd.DataFrame,
@@ -37,7 +43,7 @@ def compute_asset_returns(
     fixed_cost: float,
     variable_cost: float,
     start: date,
-    end: date
+    end: date,
 ) -> dict[str, pd.Series | None]:
     """
     Compute returns for each asset and portfolio.
@@ -66,12 +72,13 @@ def compute_asset_returns(
                 end_date=end.isoformat(),
                 acceptable_diff=acceptable_diff,
                 fixed_cost=fixed_cost,
-                variable_cost=variable_cost
+                variable_cost=variable_cost,
             )[0]
         except Exception:
             asset_returns[title] = None
-    
+
     return asset_returns
+
 
 def show_summary(asset_returns: dict[str, pd.Series | None]):
     """
@@ -89,15 +96,26 @@ def show_summary(asset_returns: dict[str, pd.Series | None]):
         rows.append(s)
     df = pd.DataFrame(rows)
     percent_cols = [
-        'Arithmetic Mean', 'Geometric Mean', 'Volatility', 'Max Drawdown',
-        'Best Day', 'Worst Day', 'Best Year', 'Worst Year'
+        "Arithmetic Mean",
+        "Geometric Mean",
+        "Volatility",
+        "Max Drawdown",
+        "Best Day",
+        "Worst Day",
+        "Best Year",
+        "Worst Year",
     ]
     fmt_dict = {col: "{:.2%}" for col in percent_cols if col in df.columns}
     styled = df.style.format(fmt_dict)
     st.subheader("Portfolio Metrics Table")
     st.dataframe(styled)
 
-def plot_results(returns: pd.DataFrame, criteria: list[tuple[str, dict[str, float]]], solver: PortfolioSolver):
+
+def plot_results(
+    returns: pd.DataFrame,
+    criteria: list[tuple[str, dict[str, float]]],
+    solver: PortfolioSolver,
+):
     """
     Plot wealth evolution and returns distribution for each portfolio.
 
@@ -131,7 +149,10 @@ def plot_results(returns: pd.DataFrame, criteria: list[tuple[str, dict[str, floa
     fig3 = plot_correlation_matrix(returns)
     st.pyplot(fig3)
 
-def get_inputs() -> tuple[list[str], date, date, float, float, float, float, float, bool]:
+
+def get_inputs() -> tuple[
+    list[str], date, date, float, float, float, float, float, bool
+]:
     """
     Get user inputs from the sidebar.
 
@@ -170,17 +191,44 @@ def get_inputs() -> tuple[list[str], date, date, float, float, float, float, flo
             st.sidebar.error(str(e))
     start = st.sidebar.date_input("Start date", value=date(2020, 1, 1))
     end = st.sidebar.date_input("End date", value=date.today())
-    initial_amount = st.sidebar.number_input("Initial amount", min_value=1000, value=10000, step=100)
-    acceptable_diff = st.sidebar.number_input("Acceptable difference", min_value=0.0, max_value=1.0, value=0.05, step=0.01)
-    fixed_cost = st.sidebar.number_input("Fixed cost", min_value=0.0, value=1.0, step=0.1)
-    variable_cost = st.sidebar.number_input("Variable cost", min_value=0.0, max_value=1.0, value=0.0, step=0.01)
+    initial_amount = st.sidebar.number_input(
+        "Initial amount", min_value=1000, value=10000, step=100
+    )
+    acceptable_diff = st.sidebar.number_input(
+        "Acceptable difference", min_value=0.0, max_value=1.0, value=0.05, step=0.01
+    )
+    fixed_cost = st.sidebar.number_input(
+        "Fixed cost", min_value=0.0, value=1.0, step=0.1
+    )
+    variable_cost = st.sidebar.number_input(
+        "Variable cost", min_value=0.0, max_value=1.0, value=0.0, step=0.01
+    )
     run = st.sidebar.button("Calculate portfolios", type="primary")
-    return selected, start, end, initial_amount, acceptable_diff, fixed_cost, variable_cost, run
+    return (
+        selected,
+        start,
+        end,
+        initial_amount,
+        acceptable_diff,
+        fixed_cost,
+        variable_cost,
+        run,
+    )
+
 
 def main():
     st.set_page_config(page_title="Geometric Portfolio Explorer")
     st.title("Geometric Portfolio Explorer")
-    selected, start, end, initial_amount, acceptable_diff, fixed_cost, variable_cost, run = get_inputs()
+    (
+        selected,
+        start,
+        end,
+        initial_amount,
+        acceptable_diff,
+        fixed_cost,
+        variable_cost,
+        run,
+    ) = get_inputs()
     if not run:
         return
     if not selected:
@@ -190,12 +238,12 @@ def main():
     with st.spinner("Fetching data and running simulation..."):
         try:
             returns = get_returns(
-                tickers=selected,
-                start_date=start.isoformat(),
-                end_date=end.isoformat()
+                tickers=selected, start_date=start.isoformat(), end_date=end.isoformat()
             )
             solver = PortfolioSolver(returns)
-            best_weights_geometric, best_weights_max_drawdown, best_weights_calmar = solver.run()
+            best_weights_geometric, best_weights_max_drawdown, best_weights_calmar = (
+                solver.run()
+            )
         except Exception as e:
             st.error(f"Error in optimization: {e}")
             return
@@ -203,7 +251,7 @@ def main():
     criteria = [
         ("Highest Geometric Mean", best_weights_geometric),
         ("Lowest Max Drawdown", best_weights_max_drawdown),
-        ("Highest Calmar Ratio", best_weights_calmar)
+        ("Highest Calmar Ratio", best_weights_calmar),
     ]
     display_weights(criteria)
 
@@ -215,24 +263,19 @@ def main():
         fixed_cost,
         variable_cost,
         start,
-        end
+        end,
     )
     show_summary(asset_returns)
     plot_results(returns, criteria, solver)
 
     st.subheader("Leverage Recommendation")
 
-    keys = [
-        "Highest Geometric Mean",
-        "Lowest Max Drawdown",
-        "Highest Calmar Ratio"
-    ]
+    keys = ["Highest Geometric Mean", "Lowest Max Drawdown", "Highest Calmar Ratio"]
 
     for key in keys:
         returns = asset_returns[key]
         show_leverage(returns, title=key, minimum_leverage=0.0, maximum_leverage=10.0)
-    
-    
+
 
 if __name__ == "__main__":
     main()

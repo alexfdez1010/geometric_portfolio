@@ -16,13 +16,13 @@ def test_backtesting_basic():
     # Run backtest
     returns, weight_hist = backtesting(
         10000,
-        tickers, 
-        weights, 
-        start, 
-        end, 
-        acceptable_diff, 
-        fixed_cost=0.01, 
-        variable_cost=0.001
+        tickers,
+        weights,
+        start,
+        end,
+        acceptable_diff,
+        fixed_cost=0.01,
+        variable_cost=0.001,
     )
 
     # Assert types

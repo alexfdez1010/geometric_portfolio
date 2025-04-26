@@ -11,6 +11,7 @@ class PortfolioSolver:
     Numerical optimization solver for portfolio weights maximizing geometric mean,
     minimizing max drawdown, and maximizing Calmar ratio.
     """
+
     returns: pd.DataFrame
     best_weights_geometric: dict[str, float] | None
     best_weights_max_drawdown: dict[str, float] | None
@@ -49,7 +50,7 @@ class PortfolioSolver:
         n = len(assets)
         x0 = np.ones(n) / n
         bounds = [(0.0, 1.0)] * n
-        constraints = {'type': 'eq', 'fun': lambda x: np.sum(x) - 1.0}
+        constraints = {"type": "eq", "fun": lambda x: np.sum(x) - 1.0}
 
         def obj_geom(x):
             ret = self.compute_returns(dict(zip(assets, x)))
@@ -63,24 +64,38 @@ class PortfolioSolver:
             ret = self.compute_returns(dict(zip(assets, x)))
             return -calmar_ratio(ret)
 
-        sol_g = minimize(obj_geom, x0, method='SLSQP', bounds=bounds, constraints=constraints)
-        sol_v = minimize(obj_max_drawdown, x0, method='SLSQP', bounds=bounds, constraints=constraints)
-        sol_c = minimize(obj_calmar, x0, method='SLSQP', bounds=bounds, constraints=constraints)
+        sol_g = minimize(
+            obj_geom, x0, method="SLSQP", bounds=bounds, constraints=constraints
+        )
+        sol_v = minimize(
+            obj_max_drawdown, x0, method="SLSQP", bounds=bounds, constraints=constraints
+        )
+        sol_c = minimize(
+            obj_calmar, x0, method="SLSQP", bounds=bounds, constraints=constraints
+        )
 
         self.best_weights_geometric = dict(zip(assets, sol_g.x))
         self.best_weights_max_drawdown = dict(zip(assets, sol_v.x))
         self.best_weights_calmar = dict(zip(assets, sol_c.x))
 
-        return self.best_weights_geometric, self.best_weights_max_drawdown, self.best_weights_calmar
-    
+        return (
+            self.best_weights_geometric,
+            self.best_weights_max_drawdown,
+            self.best_weights_calmar,
+        )
+
     def plot_geometric_max_drawdown(self) -> None:
         """
         Plot the best geometric mean and lowest max drawdown portfolios
         and the assets returns in a geometric max drawdown space.
         """
-        if self.best_weights_geometric is None or self.best_weights_max_drawdown is None or self.best_weights_calmar is None:
+        if (
+            self.best_weights_geometric is None
+            or self.best_weights_max_drawdown is None
+            or self.best_weights_calmar is None
+        ):
             raise ValueError("Best weights must be computed first, use run() method.")
-        
+
         # Compute best geometric mean and lowest max drawdown portfolios
         best_geometric = self.best_weights_geometric
         best_max_drawdown = self.best_weights_max_drawdown
@@ -97,45 +112,54 @@ class PortfolioSolver:
             plt.scatter(
                 max_drawdown(returns) * 100,
                 geometric_mean(returns) * 100,
-                marker='o',
+                marker="o",
                 s=100,
                 alpha=0.5,
-                label=asset
+                label=asset,
             )
-        max_drawdown_geometric, geometric_mean_geometric = max_drawdown(returns_geometric) * 100, geometric_mean(returns_geometric) * 100
-        max_drawdown_max_drawdown, geometric_mean_max_drawdown = max_drawdown(returns_max_drawdown) * 100, geometric_mean(returns_max_drawdown) * 100
-        max_drawdown_calmar, geometric_mean_calmar = max_drawdown(returns_calmar) * 100, geometric_mean(returns_calmar) * 100
+        max_drawdown_geometric, geometric_mean_geometric = (
+            max_drawdown(returns_geometric) * 100,
+            geometric_mean(returns_geometric) * 100,
+        )
+        max_drawdown_max_drawdown, geometric_mean_max_drawdown = (
+            max_drawdown(returns_max_drawdown) * 100,
+            geometric_mean(returns_max_drawdown) * 100,
+        )
+        max_drawdown_calmar, geometric_mean_calmar = (
+            max_drawdown(returns_calmar) * 100,
+            geometric_mean(returns_calmar) * 100,
+        )
 
         # Create scatter plot of max drawdown vs geometric mean
         plt.scatter(
             max_drawdown_geometric,
             geometric_mean_geometric,
-            marker='*',
+            marker="*",
             s=300,
-            color='red',
-            label='Best Geometric Mean'
+            color="red",
+            label="Best Geometric Mean",
         )
         plt.scatter(
             max_drawdown_max_drawdown,
             geometric_mean_max_drawdown,
-            marker='d',
+            marker="d",
             s=200,
-            color='blue',
-            label='Lowest Max Drawdown'
+            color="blue",
+            label="Lowest Max Drawdown",
         )
         plt.scatter(
             max_drawdown_calmar,
             geometric_mean_calmar,
-            marker='s',
+            marker="s",
             s=200,
-            color='green',
-            label='Highest Calmar Ratio'
+            color="green",
+            label="Highest Calmar Ratio",
         )
 
-        plt.xlabel('Max Drawdown (%)')
-        plt.ylabel('Geometric Mean Return (%)')
-        plt.title('Portfolio Optimization: Geometric Mean vs Max Drawdown')
+        plt.xlabel("Max Drawdown (%)")
+        plt.ylabel("Geometric Mean Return (%)")
+        plt.title("Portfolio Optimization: Geometric Mean vs Max Drawdown")
         plt.grid(True)
-        plt.legend(loc='best')
+        plt.legend(loc="best")
         plt.tight_layout()
         plt.show()

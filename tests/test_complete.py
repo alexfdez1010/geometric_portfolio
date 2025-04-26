@@ -3,6 +3,7 @@ from geometric_portfolio.data import get_returns
 from geometric_portfolio.solver import PortfolioSolver
 from geometric_portfolio.metrics import summary
 
+
 def test_integration_full_flow():
     # Select assets
     tickers = ["AAPL", "MSFT", "GC=F", "BTC-USD"]
@@ -14,7 +15,7 @@ def test_integration_full_flow():
 
     # Run Monte Carlo simulation
     solver = PortfolioSolver(returns)
-    best_geometric, best_volatility, best_alejandro = solver.run()  
+    best_geometric, best_volatility, best_alejandro = solver.run()
     assert isinstance(best_geometric, dict)
     assert isinstance(best_volatility, dict)
     assert isinstance(best_alejandro, dict)

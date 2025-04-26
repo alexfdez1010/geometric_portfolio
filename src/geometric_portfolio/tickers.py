@@ -26,17 +26,47 @@ TICKERS = {
     "S&P 500 VIX Short-term Futures Index (VILX.L)": "VILX.L",
     "WisdomTree NASDAQ-100 3x Daily Leveraged (3QQQ.L)": "3QQQ.L",
     "WisdomTree S&P 500 3x Daily Leveraged (3SPY.L)": "3SPY.L",
-    "WisdomTree Gold 3x Daily Leveraged (3GOL.L)": "3GOL.L"
+    "WisdomTree Gold 3x Daily Leveraged (3GOL.L)": "3GOL.L",
 }
 
 CATEGORIES = {
-    "Equity ETFs": ["S&P 500 (VOO)", "Nasdaq (CSNDX.SW)", "SPDR Dow Jones (DIA)", "Invesco S&P 500 Equal Weight ETF (RSP)", "First Trust NASDAQ-100 Equal Weighted Index Fund (QQEW)", "Invesco S&P SmallCap 600 Equal Weight ETF (EWSC)", "Invesco S&P MidCap 400 Equal Weight ETF (EWMC)"],
-    "Leveraged ETFs": ["WisdomTree Gold 3x Daily Leveraged (3GOL.L)", "WisdomTree NASDAQ-100 3x Daily Leveraged (3QQQ.L)", "WisdomTree S&P 500 3x Daily Leveraged (3SPY.L)"],
+    "Equity ETFs": [
+        "S&P 500 (VOO)",
+        "Nasdaq (CSNDX.SW)",
+        "SPDR Dow Jones (DIA)",
+        "Invesco S&P 500 Equal Weight ETF (RSP)",
+        "First Trust NASDAQ-100 Equal Weighted Index Fund (QQEW)",
+        "Invesco S&P SmallCap 600 Equal Weight ETF (EWSC)",
+        "Invesco S&P MidCap 400 Equal Weight ETF (EWMC)",
+    ],
+    "Leveraged ETFs": [
+        "WisdomTree Gold 3x Daily Leveraged (3GOL.L)",
+        "WisdomTree NASDAQ-100 3x Daily Leveraged (3QQQ.L)",
+        "WisdomTree S&P 500 3x Daily Leveraged (3SPY.L)",
+    ],
     "Crypto": ["Bitcoin (BTC-USD)", "Ethereum (ETH-USD)"],
-    "Commodities": ["SPDR Gold Trust (GLD)", "iShares Silver Trust (SLV)", "United States Oil (USO)"],
-    "VIX ETFs": ["S&P 500 VIX Short-term Futures Index (VILX.L)", "iPath S&P 500 VIX (VXX)"],
-    "Stocks": ["Apple Inc. (AAPL)", "Microsoft Corp. (MSFT)", "Alphabet Inc. (GOOGL)", "Amazon.com Inc. (AMZN)", "NVIDIA Corp. (NVDA)", "Tesla Inc. (TSLA)", "Meta Platforms Inc. (META)", "Berkshire Hathaway (BRK-B)", "Walmart Inc. (WMT)"]
+    "Commodities": [
+        "SPDR Gold Trust (GLD)",
+        "iShares Silver Trust (SLV)",
+        "United States Oil (USO)",
+    ],
+    "VIX ETFs": [
+        "S&P 500 VIX Short-term Futures Index (VILX.L)",
+        "iPath S&P 500 VIX (VXX)",
+    ],
+    "Stocks": [
+        "Apple Inc. (AAPL)",
+        "Microsoft Corp. (MSFT)",
+        "Alphabet Inc. (GOOGL)",
+        "Amazon.com Inc. (AMZN)",
+        "NVIDIA Corp. (NVDA)",
+        "Tesla Inc. (TSLA)",
+        "Meta Platforms Inc. (META)",
+        "Berkshire Hathaway (BRK-B)",
+        "Walmart Inc. (WMT)",
+    ],
 }
+
 
 def validate_ticker(ticker: str) -> bool:
     """
@@ -47,6 +77,7 @@ def validate_ticker(ticker: str) -> bool:
         return not df.empty
     except Exception:
         return False
+
 
 def resolve_ticker(name_or_symbol: str) -> str:
     """
