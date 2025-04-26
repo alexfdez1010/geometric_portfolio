@@ -15,13 +15,13 @@ def test_integration_full_flow():
 
     # Run Monte Carlo simulation
     solver = PortfolioSolver(returns)
-    best_geometric, best_volatility, best_alejandro = solver.run()
+    best_geometric, best_volatility, best_calmar = solver.run()
     assert isinstance(best_geometric, dict)
     assert isinstance(best_volatility, dict)
-    assert isinstance(best_alejandro, dict)
+    assert isinstance(best_calmar, dict)
     print("Best geometric weights found:", best_geometric)
     print("Best volatility weights found:", best_volatility)
-    print("Best alejandro weights found:", best_alejandro)
+    print("Best calmar weights found:", best_calmar)
 
     # Compute returns for best geometric weights
     best_returns = solver.compute_returns({k: best_geometric[k] for k in tickers})
