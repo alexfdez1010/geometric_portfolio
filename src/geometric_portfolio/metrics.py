@@ -64,9 +64,9 @@ def sharpe_ratio(returns: pd.Series, risk_free_rate: float = 0.0, periods_per_ye
     return (arithmetic_mean(returns, periods_per_year) - risk_free_rate) / vol
 
 
-def alejandro_ratio(returns: pd.Series, risk_preference: float = 1.0) -> float:
+def calmar_ratio(returns: pd.Series, risk_preference: float = 1.0) -> float:
     """
-    Calculate the Alejandro ratio of returns (geometric mean / max drawdown ^ risk_preference). This
+    Calculate the Calmar ratio of returns (geometric mean / max drawdown ^ risk_preference). This
     ratio wants to maximize the geometric mean while minimizing the max drawdown. Depeding of the
     risk preference, the ratio will be more or less sensitive to the max drawdown. Higher
     risk preference will make the ratio more sensitive to the max drawdown. If risk preference is 0,
@@ -77,7 +77,7 @@ def alejandro_ratio(returns: pd.Series, risk_preference: float = 1.0) -> float:
         risk_preference: Risk preference parameter (higher implies less risk, if 0 equals to maximize the geometric mean).
 
     Returns:
-        float: Annualized Alejandro ratio.
+        float: Annualized Calmar ratio.
     """
     max_drawdown_value = max_drawdown(returns)
     if np.isclose(max_drawdown_value, 0):
@@ -171,7 +171,7 @@ def summary(returns: pd.Series, risk_free_rate: float = 0.0, periods_per_year: i
     metrics = {
         'Geometric Mean': geometric_mean(returns),
         'Max Drawdown': max_drawdown(returns),
-        'Alejandro Ratio': alejandro_ratio(returns),
+        'Calmar Ratio': calmar_ratio(returns),
         'Volatility': volatility(returns),
         'Sharpe Ratio': sharpe_ratio(returns, risk_free_rate, periods_per_year),
         'Best Day': best_day(returns),

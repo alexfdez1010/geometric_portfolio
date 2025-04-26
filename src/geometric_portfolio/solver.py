@@ -3,24 +3,24 @@ import numpy as np
 from scipy.optimize import minimize
 import matplotlib.pyplot as plt
 
-from geometric_portfolio.metrics import geometric_mean, alejandro_ratio, max_drawdown
+from geometric_portfolio.metrics import geometric_mean, calmar_ratio, max_drawdown
 
 
 class PortfolioSolver:
     """
     Numerical optimization solver for portfolio weights maximizing geometric mean,
-    minimizing max drawdown, and maximizing Alejandro ratio.
+    minimizing max drawdown, and maximizing Calmar ratio.
     """
     returns: pd.DataFrame
     best_weights_geometric: dict[str, float] | None
     best_weights_max_drawdown: dict[str, float] | None
-    best_weights_alejandro: dict[str, float] | None
+    best_weights_calmar: dict[str, float] | None
 
     def __init__(self, returns: pd.DataFrame):
         self.returns = returns
         self.best_weights_geometric = None
         self.best_weights_max_drawdown = None
-        self.best_weights_alejandro = None
+        self.best_weights_calmar = None
 
     def compute_returns(self, weights: dict[str, float]) -> pd.Series:
         weight_series = pd.Series(weights)
@@ -37,13 +37,13 @@ class PortfolioSolver:
     def run(self) -> tuple[dict[str, float], dict[str, float], dict[str, float]]:
         """
         Optimize portfolio weights under long-only constraints for three objectives:
-        highest geometric mean, lowest volatility, highest Alejandro ratio.
+        highest geometric mean, lowest volatility, highest Calmar ratio.
 
         Returns:
             Tuple of best weights for each objective:
             - Best weights for highest geometric mean
             - Best weights for lowest volatility
-            - Best weights for highest Alejandro ratio
+            - Best weights for highest Calmar ratio
         """
         assets = list(self.returns.columns)
         n = len(assets)
@@ -59,36 +59,36 @@ class PortfolioSolver:
             ret = self.compute_returns(dict(zip(assets, x)))
             return max_drawdown(ret)
 
-        def obj_alejandro(x):
+        def obj_calmar(x):
             ret = self.compute_returns(dict(zip(assets, x)))
-            return -alejandro_ratio(ret)
+            return -calmar_ratio(ret)
 
         sol_g = minimize(obj_geom, x0, method='SLSQP', bounds=bounds, constraints=constraints)
         sol_v = minimize(obj_max_drawdown, x0, method='SLSQP', bounds=bounds, constraints=constraints)
-        sol_a = minimize(obj_alejandro, x0, method='SLSQP', bounds=bounds, constraints=constraints)
+        sol_c = minimize(obj_calmar, x0, method='SLSQP', bounds=bounds, constraints=constraints)
 
         self.best_weights_geometric = dict(zip(assets, sol_g.x))
         self.best_weights_max_drawdown = dict(zip(assets, sol_v.x))
-        self.best_weights_alejandro = dict(zip(assets, sol_a.x))
+        self.best_weights_calmar = dict(zip(assets, sol_c.x))
 
-        return self.best_weights_geometric, self.best_weights_max_drawdown, self.best_weights_alejandro
+        return self.best_weights_geometric, self.best_weights_max_drawdown, self.best_weights_calmar
     
     def plot_geometric_max_drawdown(self) -> None:
         """
         Plot the best geometric mean and lowest max drawdown portfolios
         and the assets returns in a geometric max drawdown space.
         """
-        if self.best_weights_geometric is None or self.best_weights_max_drawdown is None or self.best_weights_alejandro is None:
+        if self.best_weights_geometric is None or self.best_weights_max_drawdown is None or self.best_weights_calmar is None:
             raise ValueError("Best weights must be computed first, use run() method.")
         
         # Compute best geometric mean and lowest max drawdown portfolios
         best_geometric = self.best_weights_geometric
         best_max_drawdown = self.best_weights_max_drawdown
-        best_alejandro = self.best_weights_alejandro
+        best_calmar = self.best_weights_calmar
 
         returns_geometric = self.compute_returns(best_geometric)
         returns_max_drawdown = self.compute_returns(best_max_drawdown)
-        returns_alejandro = self.compute_returns(best_alejandro)
+        returns_calmar = self.compute_returns(best_calmar)
 
         # Plot assets returns
         plt.figure(figsize=(10, 6))
@@ -104,7 +104,7 @@ class PortfolioSolver:
             )
         max_drawdown_geometric, geometric_mean_geometric = max_drawdown(returns_geometric) * 100, geometric_mean(returns_geometric) * 100
         max_drawdown_max_drawdown, geometric_mean_max_drawdown = max_drawdown(returns_max_drawdown) * 100, geometric_mean(returns_max_drawdown) * 100
-        max_drawdown_alejandro, geometric_mean_alejandro = max_drawdown(returns_alejandro) * 100, geometric_mean(returns_alejandro) * 100
+        max_drawdown_calmar, geometric_mean_calmar = max_drawdown(returns_calmar) * 100, geometric_mean(returns_calmar) * 100
 
         # Create scatter plot of max drawdown vs geometric mean
         plt.scatter(
@@ -124,12 +124,12 @@ class PortfolioSolver:
             label='Lowest Max Drawdown'
         )
         plt.scatter(
-            max_drawdown_alejandro,
-            geometric_mean_alejandro,
+            max_drawdown_calmar,
+            geometric_mean_calmar,
             marker='s',
             s=200,
             color='green',
-            label='Highest Alejandro Ratio'
+            label='Highest Calmar Ratio'
         )
 
         plt.xlabel('Max Drawdown (%)')

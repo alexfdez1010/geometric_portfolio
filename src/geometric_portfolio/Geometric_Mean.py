@@ -195,7 +195,7 @@ def main():
                 end_date=end.isoformat()
             )
             solver = PortfolioSolver(returns)
-            best_weights_geometric, best_weights_max_drawdown, best_weights_alejandro = solver.run()
+            best_weights_geometric, best_weights_max_drawdown, best_weights_calmar = solver.run()
         except Exception as e:
             st.error(f"Error in optimization: {e}")
             return
@@ -203,7 +203,7 @@ def main():
     criteria = [
         ("Highest Geometric Mean", best_weights_geometric),
         ("Lowest Max Drawdown", best_weights_max_drawdown),
-        ("Highest Alejandro Ratio", best_weights_alejandro)
+        ("Highest Calmar Ratio", best_weights_calmar)
     ]
     display_weights(criteria)
 
@@ -225,7 +225,7 @@ def main():
     keys = [
         "Highest Geometric Mean",
         "Lowest Max Drawdown",
-        "Highest Alejandro Ratio"
+        "Highest Calmar Ratio"
     ]
 
     for key in keys:

@@ -31,7 +31,7 @@ def test_max_drawdown():
     wealth = (1 + returns).cumprod()
     peak = wealth.cummax()
     drawdown = wealth / peak - 1
-    expected = drawdown.min()
+    expected = -drawdown.min()
     assert np.isclose(result, expected)
 
 def test_sharpe_ratio_zero_vol():

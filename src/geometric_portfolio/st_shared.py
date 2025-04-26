@@ -27,10 +27,10 @@ def show_leverage(returns: pd.Series, title: str | None = None, minimum_leverage
     chart_data = df.set_index("Leverage").copy()
     chart_data["Geometric Mean (%)"] = chart_data["Geometric Mean"] * 100
     chart_data["Volatility (%)"] = chart_data["Volatility"] * 100
-    chart_data["Alejandro Ratio (%)"] = chart_data["Alejandro Ratio"] * 100
+    chart_data["Calmar Ratio (%)"] = chart_data["Calmar Ratio"] * 100
     
     st.line_chart(
-        chart_data[["Geometric Mean (%)", "Volatility (%)", "Alejandro Ratio (%)"]],
+        chart_data[["Geometric Mean (%)", "Volatility (%)", "Calmar Ratio (%)"]],
         color=["#ff9933", "#33cc33", "#3366ff"]
     )
 

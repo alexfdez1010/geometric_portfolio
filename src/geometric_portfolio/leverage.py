@@ -14,7 +14,7 @@ def leverage_optimizer(returns: pd.Series, minimum_leverage: float = 0.0, maximu
     Returns:
         pd.DataFrame: DataFrame containing the optimal leverage and corresponding metrics.
     """
-    leverages, geometric_means, volatilities, alejandro_ratios = [], [], [], []
+    leverages, geometric_means, volatilities, calmar_ratios = [], [], [], []
         
     for leverage in np.linspace(minimum_leverage, maximum_leverage, 1000):
 
@@ -31,9 +31,6 @@ def leverage_optimizer(returns: pd.Series, minimum_leverage: float = 0.0, maximu
         leverages.append(leverage)
         geometric_means.append(geometric_mean_leveraged)
         volatilities.append(volatility_leveraged)
-        alejandro_ratios.append(geometric_mean_leveraged / volatility_leveraged)
+        calmar_ratios.append(geometric_mean_leveraged / volatility_leveraged)
         
-    return pd.DataFrame({"Leverage": leverages, "Geometric Mean": geometric_means, "Volatility": volatilities, "Alejandro Ratio": alejandro_ratios})
-    
-    
-    
+    return pd.DataFrame({"Leverage": leverages, "Geometric Mean": geometric_means, "Volatility": volatilities, "Calmar Ratio": calmar_ratios})

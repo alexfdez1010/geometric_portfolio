@@ -7,7 +7,7 @@ def test_backtesting_basic():
     # Select three well-known tickers
     tickers = ["AAPL", "MSFT", "GOOG"]
     # initial weights that sum to 1
-    weights = [0.3, 0.4, 0.3]
+    weights = {"AAPL": 0.3, "MSFT": 0.4, "GOOG": 0.3}
     start = "2020-01-01"
     end = "2025-01-01"
     # set acceptable_diff large to avoid rebalancing in this short period
@@ -15,6 +15,7 @@ def test_backtesting_basic():
 
     # Run backtest
     returns, weight_hist = backtesting(
+        10000,
         tickers, 
         weights, 
         start, 
