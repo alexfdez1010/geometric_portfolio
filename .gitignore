@@ -12,3 +12,4 @@ wheels/
 *.cache
 
 .vscode
+.ruff_cache
