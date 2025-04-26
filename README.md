@@ -155,4 +155,4 @@ This work is not a financial advice and should not be used as a basis for making
 
 ## License
 
-You can use this code for personal use, but not for commercial purposes. Check the [LICENSE](LICENSE) file for more details.
+Check the [LICENSE](LICENSE) file for more details of how you can use this work.
