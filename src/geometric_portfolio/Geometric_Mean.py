@@ -15,6 +15,7 @@ from geometric_portfolio.backtesting import backtesting
 from geometric_portfolio.tickers import TICKERS, CATEGORIES, resolve_ticker
 from geometric_portfolio.st_shared import show_leverage
 
+st.set_page_config(page_title="Geometric Portfolio Explorer", page_icon="📈", layout="wide")
 
 def display_weights(criteria: list[tuple[str, dict[str, float]]]):
     """
