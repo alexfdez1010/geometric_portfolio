@@ -87,7 +87,7 @@ class CustomPortfolioPage(Page):
             strategy_returns, _ = backtesting(
                 initial_amount=initial_amount,
                 tickers=selected,
-                weights=weights,
+                target_weights=weights,
                 start_date=start.isoformat(),
                 end_date=end.isoformat(),
                 acceptable_diff=acceptable_diff,

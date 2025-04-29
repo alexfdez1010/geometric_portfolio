@@ -69,17 +69,19 @@ class GeometricMeanPage(Page):
         asset_returns = {asset: returns[asset] for asset in returns.columns}
         for title, weights in criteria:
             try:
-                asset_returns[title] = backtesting(
+                strategy_returns, _ = backtesting(
                     initial_amount=initial_amount,
                     tickers=list(weights.keys()),
-                    weights=weights,
+                    target_weights=weights,
                     start_date=start.isoformat(),
                     end_date=end.isoformat(),
                     acceptable_diff=acceptable_diff,
                     fixed_cost=fixed_cost,
                     variable_cost=variable_cost,
-                )[0]
-            except Exception:
+                )
+                asset_returns[title] = strategy_returns
+            except Exception as e:
+                st.error(f"Error backtesting '{title}': {e}")
                 asset_returns[title] = None
 
         return asset_returns
