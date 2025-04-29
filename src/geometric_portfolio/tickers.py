@@ -44,7 +44,6 @@ CATEGORIES = {
         "WisdomTree NASDAQ-100 3x Daily Leveraged (3QQQ.L)",
         "WisdomTree S&P 500 3x Daily Leveraged (3SPY.L)",
     ],
-    "Crypto": ["Bitcoin (BTC-USD)", "Ethereum (ETH-USD)"],
     "Commodities": [
         "SPDR Gold Trust (GLD)",
         "iShares Silver Trust (SLV)",

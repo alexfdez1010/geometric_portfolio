@@ -141,11 +141,6 @@ class GeometricMeanPage(Page):
                 "Leveraged ETFs", CATEGORIES["Leveraged ETFs"], key="gm_lev_select"
             )
             selected_names.extend(sel_lev)
-        with st.expander("Crypto"):
-            sel_crypto = st.multiselect(
-                "Crypto", CATEGORIES["Crypto"], key="gm_crypto_select"
-            )
-            selected_names.extend(sel_crypto)
         with st.expander("Commodities"):
             sel_comm = st.multiselect(
                 "Commodities ETFs", CATEGORIES["Commodities"], key="gm_comm_select"
