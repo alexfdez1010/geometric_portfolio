@@ -27,6 +27,17 @@ class LeverageOptimizerPage(Page):
 
         start = st.date_input("Start date", value=date(2020, 1, 1), key="lo_start_date")
         end = st.date_input("End date", value=date.today(), key="lo_end_date")
+
+        # Add input for Risk-Free Rate
+        risk_free_rate_pct = st.number_input(
+            "Risk-Free Rate (%)",
+            value=0.0,
+            format="%.2f",
+            key="lo_risk_free_rate",
+            help="Enter the annualized risk-free rate as a percentage (e.g., 2.25 for 2.25%).",
+        )
+        risk_free_rate = risk_free_rate_pct / 100.0  # Convert percentage to decimal
+
         run = st.button("Find Optimal Leverage", key="lo_run_button")
 
         if run:
@@ -38,6 +49,6 @@ class LeverageOptimizerPage(Page):
             show_leverage(
                 returns,
                 title="Leverage Optimizer",
-                minimum_leverage=-20,
                 maximum_leverage=20,
+                risk_free_rate=risk_free_rate,  # Pass the risk-free rate
             )

@@ -6,8 +6,8 @@ from geometric_portfolio.leverage import leverage_optimizer
 def show_leverage(
     returns: pd.Series,
     title: str | None = None,
-    minimum_leverage: float = 0.0,
     maximum_leverage: float = 1.0,
+    risk_free_rate: float = 0.0,
 ):
     """
     Show the optimal leverage for a given series of returns.
@@ -15,11 +15,13 @@ def show_leverage(
     Args:
         returns: Series of daily returns.
         title: Title for the section.
-        minimum_leverage: Minimum leverage to consider (default is 0.0).
         maximum_leverage: Maximum leverage to consider (default is 1.0).
+        risk_free_rate: Annualized risk-free rate (default is 0.0).
     """
     df = leverage_optimizer(
-        returns, minimum_leverage=minimum_leverage, maximum_leverage=maximum_leverage
+        returns,
+        maximum_leverage=maximum_leverage,
+        risk_free_rate=risk_free_rate,
     )
 
     best_idx = df["Geometric Mean"].idxmax()

@@ -51,7 +51,6 @@ class CustomPortfolioPage(Page):
 
         # Weight assignment
         weights = {}
-        print(selected)
         if selected:
             st.subheader("Assign Weights")
 
