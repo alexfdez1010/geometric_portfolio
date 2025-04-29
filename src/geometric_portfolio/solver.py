@@ -162,4 +162,6 @@ class PortfolioSolver:
         plt.grid(True)
         plt.legend(loc="best")
         plt.tight_layout()
-        plt.show()
+
+    def plot_optimization_landscape(self):
+        pass

@@ -38,7 +38,9 @@ def backtesting(
         raise ValueError("Weights must sum to 1.0")
 
     # Download data
-    raw_data = yf.download(tickers, start=start_date, end=end_date, progress=False)
+    raw_data = yf.download(
+        tickers, start=start_date, end=end_date, progress=False, auto_adjust=True
+    )
     if raw_data.empty:
         raise ValueError(f"No data found for tickers {tickers}")
 
