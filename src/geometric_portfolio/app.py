@@ -3,6 +3,7 @@ from geometric_portfolio.screens.pages import get_page, page_selector
 
 
 def main():
+    st.logo("images/logo.jpg")
     st.set_page_config(
         page_title="Geometric Portfolio Explorer",
         page_icon="📈",
